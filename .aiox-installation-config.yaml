@@ -1,0 +1,13 @@
+installation:
+  mode: project-development
+  detected_at: '2026-03-25T19:05:36.558Z'
+repository:
+  url: local-repository
+  auto_detect: true
+framework:
+  source: npm
+  version: 1.0.0
+  location: /home/gustavo/.aiox-core-source
+git_ignore_rules:
+  mode: project-development
+  ignore_framework_files: true

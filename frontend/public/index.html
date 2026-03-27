@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Checklist — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:#0a0a14;min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+
+    /* ── Left panel ── */
+    .left{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:3rem;background:#0a0a14}
+    /* grid pattern overlay */
+    .left::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(124,58,237,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,.07) 1px,transparent 1px);background-size:40px 40px;z-index:1}
+    /* ambient glow orbs — all violet/indigo family */
+    .orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.45}
+    .orb1{width:420px;height:420px;background:#4c1d95;top:-120px;left:-100px}
+    .orb2{width:300px;height:300px;background:#5b21b6;bottom:80px;right:-80px}
+    .orb3{width:200px;height:200px;background:#6d28d9;bottom:-60px;left:60px}
+    .z{position:relative;z-index:2}
+
+    .brand{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:#fff}
+    .bmark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;box-shadow:0 0 16px rgba(124,58,237,.5)}
+
+    .hero{margin-top:4.5rem}
+    .hero h1{font-family:'Syne',sans-serif;font-size:2.85rem;font-weight:800;line-height:1.1;color:#fff;letter-spacing:-1.5px}
+    .hero h1 span{background:linear-gradient(90deg,#c4b5fd,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .hero p{margin-top:1.1rem;font-size:14.5px;color:rgba(255,255,255,.45);line-height:1.75;max-width:310px}
+
+    /* feature pills */
+    .pills{display:flex;flex-direction:column;gap:10px;margin-top:2.5rem}
+    .pill{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.55)}
+    .pill-dot{width:6px;height:6px;border-radius:50%;background:#7c3aed;flex-shrink:0;box-shadow:0 0 6px rgba(124,58,237,.7)}
+
+    .avs{display:flex;margin-top:3rem;align-items:center}
+    .av{width:30px;height:30px;border-radius:50%;border:2px solid #0a0a14;margin-right:-7px;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center}
+    .av1{background:#5b21b6}.av2{background:#6d28d9}.av3{background:#7c3aed}.av4{background:#8b5cf6}.av5{background:#a78bfa}
+    .av-txt{margin-left:14px;font-size:12.5px;color:rgba(255,255,255,.45)}
+    .av-txt strong{color:#c4b5fd}
+
+    .stats{display:flex;gap:2rem;margin-top:1.6rem}
+    .snum{font-family:'Syne',sans-serif;font-weight:800;font-size:1.45rem;color:#fff}
+    .slbl{font-size:11.5px;color:rgba(255,255,255,.3);margin-top:3px;letter-spacing:.3px}
+
+    /* ── Right panel ── */
+    .right{background:#f7f6fb;display:flex;align-items:center;justify-content:center;padding:2.5rem}
+    .card{width:100%;max-width:390px}
+
+    .steps{display:flex;gap:6px;margin-bottom:1.8rem}
+    .dot{width:24px;height:4px;border-radius:2px;background:#e5e7eb;transition:background .3s}
+    .dot.on{background:#7c3aed}.dot.done{background:#c4b5fd}
+
+    .back{background:none;border:none;color:#7c3aed;font-size:13px;cursor:pointer;padding:0;margin-bottom:1.2rem;font-family:'DM Sans',sans-serif;font-weight:500;display:none}
+    .back.show{display:inline-block}
+
+    .ftitle{font-family:'Syne',sans-serif;font-weight:800;font-size:1.65rem;color:#0d0d1a;letter-spacing:-.8px;margin-bottom:.25rem}
+    .fsub{font-size:13px;color:#9ca3af;margin-bottom:1.8rem}
+
+    .field{margin-bottom:1rem}
+    .field label{display:block;font-size:12px;font-weight:500;color:#4b5563;margin-bottom:5px;letter-spacing:.2px}
+    .field input{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#111;outline:none;transition:border-color .15s,box-shadow .15s;background:#fff}
+    .field input:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+    .field input::placeholder{color:#d1d5db}
+
+    .forgot{text-align:right;margin-top:-4px;margin-bottom:12px}
+    .forgot a{font-size:12px;color:#7c3aed;text-decoration:none;font-weight:500}
+    .forgot a:hover{text-decoration:underline}
+
+    .btn{width:100%;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-size:15px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:opacity .15s,transform .1s,box-shadow .15s;box-shadow:0 4px 14px rgba(124,58,237,.35)}
+    .btn:hover{opacity:.93;box-shadow:0 6px 20px rgba(124,58,237,.45)}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+
+    .alert{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:1rem;display:none;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+    .alert.show{display:block}
+
+    .emp-list{display:flex;flex-direction:column;gap:8px;margin-bottom:1.2rem}
+    .emp-item{padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:10px;cursor:pointer;font-size:14px;color:#111;display:flex;align-items:center;gap:12px;transition:all .15s;background:#fff}
+    .emp-item:hover{border-color:#a78bfa;background:#faf8ff}
+    .emp-item.sel{border-color:#7c3aed;background:#f5f3ff}
+    .emp-ico{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#5b21b6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0}
+    .emp-name{font-weight:500;color:#1f1f2e}
+    .check-ico{margin-left:auto;color:#7c3aed;font-size:16px;display:none}
+    .emp-item.sel .check-ico{display:block}
+
+    .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;margin-right:6px;vertical-align:middle}
+    @keyframes sp{to{transform:rotate(360deg)}}
+
+    .terms{margin-top:1rem;font-size:11px;color:#c0c0c0;text-align:center;line-height:1.6}
+    .terms a{color:#a78bfa;text-decoration:none}
+
+    @media(max-width:720px){body{grid-template-columns:1fr}.left{display:none}.right{background:#fff;min-height:100vh;align-items:flex-start;padding-top:4rem}}
+  </style>
+</head>
+<body>
+<div class="left">
+  <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+  <div class="z">
+    <div class="brand"><div class="bmark">✓</div>Checklist</div>
+    <div class="hero">
+      <h1>Controle total<br>dos seus<br><span>processos.</span></h1>
+      <p>Gerencie checklists, equipes e empresas em um único lugar. Padronize processos e acompanhe tudo em tempo real.</p>
+      <div class="pills">
+        <div class="pill"><span class="pill-dot"></span>Checklists padronizados por empresa</div>
+        <div class="pill"><span class="pill-dot"></span>Acompanhamento em tempo real</div>
+        <div class="pill"><span class="pill-dot"></span>Relatórios e histórico completo</div>
+      </div>
+    </div>
+  </div>
+  <div class="z">
+    <div class="avs">
+      <div class="av av1">JR</div><div class="av av2">MC</div><div class="av av3">TS</div><div class="av av4">PL</div><div class="av av5">+</div>
+      <span class="av-txt"><strong>+12 mil times</strong> já usam</span>
+    </div>
+    <div class="stats">
+      <div><div class="snum">98%</div><div class="slbl">satisfação</div></div>
+      <div><div class="snum">3×</div><div class="slbl">mais produtivo</div></div>
+      <div><div class="snum">24/7</div><div class="slbl">suporte</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="right">
+  <div class="card">
+    <div class="steps">
+      <div class="dot on" id="d0"></div>
+      <div class="dot" id="d1"></div>
+    </div>
+    <button class="back" id="back-btn" onclick="ir(0)">← Voltar</button>
+    <div class="alert" id="alerta"></div>
+
+    <!-- PASSO 0: login -->
+    <div id="s0">
+      <div class="ftitle">Bem-vindo de volta</div>
+      <div class="fsub">Acesse sua conta para continuar</div>
+      <div class="field"><label>E-mail</label><input type="email" id="f-email" placeholder="voce@empresa.com" autocomplete="email"/></div>
+      <div class="field"><label>Senha</label><input type="password" id="f-senha" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div class="forgot"><a href="#">Esqueci minha senha</a></div>
+      <button class="btn" id="b0" onclick="step0()">Entrar</button>
+      <div class="terms">Ao entrar, você concorda com nossos <a href="#">Termos</a> e <a href="#">Privacidade</a>.</div>
+    </div>
+
+    <!-- PASSO 1: selecionar empresa -->
+    <div id="s1" style="display:none">
+      <div class="ftitle">Selecione a empresa</div>
+      <div class="fsub" id="sub1">Escolha com qual empresa deseja trabalhar agora.</div>
+      <div class="emp-list" id="emp-list"></div>
+      <button class="btn" id="b1" onclick="step1()" disabled>Entrar na plataforma</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API='/api/auth';
+let cur=0, tokenTemp=null, empSel=null;
+
+function ir(n){
+  cur=n;
+  [0,1].forEach(i=>{
+    document.getElementById('s'+i).style.display=i===n?'block':'none';
+    const d=document.getElementById('d'+i);
+    d.className='dot'+(i<n?' done':i===n?' on':'');
+  });
+  document.getElementById('back-btn').className='back'+(n>0?' show':'');
+  document.getElementById('alerta').className='alert';
+}
+
+function erro(msg){const el=document.getElementById('alerta');el.textContent=msg;el.className='alert show';}
+
+function loading(id,on,txt){
+  const b=document.getElementById(id);
+  b.disabled=on;
+  b.innerHTML=on?`<span class="spin"></span>${txt}`:txt;
+}
+
+async function step0(){
+  const email=document.getElementById('f-email').value.trim();
+  const senha=document.getElementById('f-senha').value;
+  if(!email||!senha) return erro('Preencha e-mail e senha.');
+  loading('b0',true,'Verificando...');
+  try{
+    const r=await fetch(`${API}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
+    const d=await r.json();
+    if(!r.ok) return erro(d.erro||'E-mail ou senha incorretos.');
+    tokenTemp=d.token_temp;
+    // Salva usuário já
+    localStorage.setItem('checklist_usuario',JSON.stringify(d.usuario));
+    if(d.empresas.length===1){
+      // Só uma empresa: pula seleção automaticamente
+      empSel=d.empresas[0];
+      await confirmarEmpresa();
+    } else {
+      // Monta lista de empresas
+      const list=document.getElementById('emp-list');
+      list.innerHTML='';
+      empSel=null;
+      document.getElementById('b1').disabled=true;
+      d.empresas.forEach(emp=>{
+        const el=document.createElement('div');
+        el.className='emp-item';
+        el.innerHTML=`<div class="emp-ico">${emp.nome.charAt(0).toUpperCase()}</div><span class="emp-name">${emp.nome}</span><span class="check-ico">✓</span>`;
+        el.onclick=()=>{
+          document.querySelectorAll('.emp-item').forEach(x=>x.classList.remove('sel'));
+          el.classList.add('sel');
+          empSel=emp;
+          document.getElementById('b1').disabled=false;
+        };
+        list.appendChild(el);
+      });
+      ir(1);
+    }
+  }catch{erro('Erro de conexão. Verifique o servidor.');}
+  finally{loading('b0',false,'Entrar');}
+}
+
+async function step1(){
+  if(!empSel) return erro('Selecione uma empresa.');
+  loading('b1',true,'Entrando...');
+  await confirmarEmpresa();
+  loading('b1',false,'Entrar na plataforma');
+}
+
+async function confirmarEmpresa(){
+  try{
+    const r=await fetch(`${API}/selecionar-empresa`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token_temp:tokenTemp,empresa_id:empSel.id})});
+    const d=await r.json();
+    if(!r.ok) return erro(d.erro||'Erro ao selecionar empresa.');
+    localStorage.setItem('checklist_token',d.token);
+    localStorage.setItem('checklist_empresa',JSON.stringify(d.empresa));
+    window.location.href='/dashboard.html';
+  }catch{erro('Erro de conexão.');}
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter') return;
+  if(cur===0) step0();
+  else if(cur===1&&!document.getElementById('b1').disabled) step1();
+});
+</script>
+</body>
+</html>
