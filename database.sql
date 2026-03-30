@@ -20,8 +20,13 @@ CREATE TABLE IF NOT EXISTS usuarios (
   sobrenome     VARCHAR(100) NOT NULL,
   email         VARCHAR(255) NOT NULL UNIQUE,
   senha_hash    VARCHAR(255) NOT NULL,
-  admin         TINYINT(1)   DEFAULT 0,
-  ativo         TINYINT(1)   DEFAULT 1,
+  admin                TINYINT(1)   DEFAULT 0,
+  ativo                TINYINT(1)   DEFAULT 1,
+  email_verificado     TINYINT(1)   NOT NULL DEFAULT 0,
+  verificacao_token    VARCHAR(128) NULL,
+  verificacao_expiry   DATETIME     NULL,
+  reset_token          VARCHAR(128) NULL,
+  reset_expiry         DATETIME     NULL,
   criado_em     DATETIME     DEFAULT CURRENT_TIMESTAMP,
   atualizado_em DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

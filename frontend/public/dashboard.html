@@ -164,7 +164,24 @@
     .emp-checks label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer}
     .emp-checks input{accent-color:#7c3aed;width:auto}
 
-    @media(max-width:800px){.sb{width:200px}}
+    /* CHART VIEWS */
+    .res-view-toggle{display:flex;gap:3px;padding:3px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px}
+    .res-view-btn{padding:6px 14px;border:none;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text3);background:transparent;transition:all .15s}
+    .res-view-btn.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);font-weight:600}
+    .charts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:1.5rem}
+    .chart-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:1.4rem}
+    .chart-card-header{display:flex;align-items:baseline;gap:8px;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1.5px solid var(--border)}
+    .chart-card .cc-nome{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text)}
+    .chart-card .cc-persp{font-size:12px;color:var(--text4);margin-left:auto}
+    .chart-card-body{display:flex;gap:1.2rem;align-items:flex-start;flex-wrap:wrap}
+    .kpi-summary{margin-top:2rem}
+    .kpi-summary h3{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--text);margin-bottom:1rem}
+    .kpi-gauge-grid{display:flex;flex-wrap:wrap;gap:1rem}
+    .kpi-gauge-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:1rem;text-align:center;min-width:170px;flex:1;transition:border-color .15s,box-shadow .15s;cursor:pointer}
+    .kpi-gauge-card:hover{border-color:#a78bfa;box-shadow:0 4px 14px rgba(124,58,237,.1)}
+    .kpi-gauge-card .kgc-nome{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:155px;margin:0 auto .2rem}
+    .kpi-gauge-card .kgc-persp{font-size:11px;color:var(--text4);margin-bottom:.3rem}
+    @media(max-width:800px){.sb{width:200px};.charts-grid{grid-template-columns:1fr}}
     @media(max-width:600px){.sb{display:none}}
   </style>
 </head>
@@ -254,6 +271,30 @@
           <div class="mc-lbl">Usuários</div>
           <div class="mc-desc">Gerencie usuários e vínculos com empresas.</div>
         </a>
+      </div>
+      <div class="kpi-summary" id="kpi-summary-section" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
+          <h3 style="margin:0">📊 Status dos KPIs</h3>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:500;color:var(--text2)">Período:</span>
+            <input type="date" id="kpi-de"
+              style="padding:6px 10px;border:1.5px solid var(--border2);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface);outline:none"
+              onfocus="this.style.borderColor='#a78bfa'" onblur="this.style.borderColor=''" onchange="renderKpiGauges()"/>
+            <span style="font-size:13px;color:var(--text4)">até</span>
+            <input type="date" id="kpi-ate"
+              style="padding:6px 10px;border:1.5px solid var(--border2);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface);outline:none"
+              onfocus="this.style.borderColor='#a78bfa'" onblur="this.style.borderColor=''" onchange="renderKpiGauges()"/>
+            <button onclick="limparFiltroKpi()"
+              style="padding:6px 13px;border:1.5px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text3);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:border-color .15s"
+              onmouseover="this.style.borderColor='#a78bfa'" onmouseout="this.style.borderColor=''">
+              Limpar
+            </button>
+            <span id="kpi-filtro-label" style="font-size:11px;color:var(--text4)"></span>
+          </div>
+        </div>
+        <div class="kpi-gauge-grid" id="kpi-gauge-grid">
+          <p style="color:var(--text4);font-size:13px">Carregando...</p>
+        </div>
       </div>
     </div>
 
@@ -375,51 +416,60 @@
     <!-- RESULTADOS -->
     <div id="page-resultado" class="page">
       <div class="tag tag-pu">◉ Resultados</div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
-        <select id="res-filtro-ind" onchange="renderResultados()"
-          style="flex:1;padding:9px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#111;outline:none;background:#fff;transition:border-color .15s"
-          onfocus="this.style.borderColor='#a78bfa'" onblur="this.style.borderColor='#e5e7eb'">
-          <option value="">Todos os indicadores</option>
-        </select>
-        <span id="res-count" style="font-size:12px;color:#9ca3af;white-space:nowrap"></span>
-      </div>
-      <div class="tbl-wrap">
-        <table><thead><tr>
-          <th class="sortable" onclick="sortTabela('res','indicador_nome')" data-col="indicador_nome">Indicador <span class="sort-ic" id="res-sort-indicador_nome"></span></th>
-          <th class="sortable" onclick="sortTabela('res','periodo_inicio')" data-col="periodo_inicio">Início <span class="sort-ic" id="res-sort-periodo_inicio"></span></th>
-          <th class="sortable" onclick="sortTabela('res','periodo_fim')" data-col="periodo_fim">Fim <span class="sort-ic" id="res-sort-periodo_fim"></span></th>
-          <th class="sortable" onclick="sortTabela('res','meta')" data-col="meta">Meta <span class="sort-ic" id="res-sort-meta"></span></th>
-          <th class="sortable" onclick="sortTabela('res','meta_atingida')" data-col="meta_atingida">Atingido <span class="sort-ic" id="res-sort-meta_atingida"></span></th>
-          <th class="sortable" onclick="sortTabela('res','percentual_atingido')" data-col="percentual_atingido">% Atingido <span class="sort-ic" id="res-sort-percentual_atingido"></span></th>
-          <th>Observação</th>
-          <th></th>
-        </tr></thead>
-          <tbody id="tbody-resultados"><tr><td colspan="8" style="color:#aaa;text-align:center;padding:1.5rem">Carregando...</td></tr></tbody>
-        </table>
-      </div>
-      <div class="form-title-row">
-        <h3 id="form-res-title" style="margin-bottom:0">Novo resultado</h3>
-        <button class="btn-cancel" id="btn-cancel-res" style="display:none" onclick="cancelarEdicao('res')">✕ Cancelar edição</button>
-      </div>
-      <p style="margin-bottom:1rem;font-size:13px;color:#888">Registre os resultados apurados por indicador e período.</p>
-      <input type="hidden" id="res-edit-id"/>
-      <div class="form">
-        <div><label>Indicador</label><select id="res-indicador"><option value="" disabled selected>Selecione o indicador</option></select></div>
-        <div class="row2">
-          <div><label>Início do período</label><input type="date" id="res-periodo-inicio"/></div>
-          <div><label>Fim do período</label><input type="date" id="res-periodo-fim"/></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
+        <div class="res-view-toggle">
+          <button class="res-view-btn on" data-view="tabela" onclick="toggleResView('tabela')">☰ Tabela</button>
+          <button class="res-view-btn" data-view="graficos" onclick="toggleResView('graficos')">📊 Gráficos</button>
         </div>
-        <div class="row2">
-          <div><label>Meta</label><input type="number" id="res-meta" placeholder="0" oninput="calcPercentual()"/></div>
-          <div><label>Meta atingida</label><input type="number" id="res-meta-atingida" placeholder="0" oninput="calcPercentual()"/></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="res-filtro-ind" onchange="renderResultados()"
+            style="padding:9px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#111;outline:none;background:#fff;transition:border-color .15s"
+            onfocus="this.style.borderColor='#a78bfa'" onblur="this.style.borderColor='#e5e7eb'">
+            <option value="">Todos os indicadores</option>
+          </select>
+          <span id="res-count" style="font-size:12px;color:#9ca3af;white-space:nowrap"></span>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f5f3ff;border-radius:10px;border:1.5px solid #ede9fe">
-          <span style="font-size:13px;color:#6b7280">% Atingido (calculado):</span>
-          <span id="res-percentual-display" style="font-size:1.2rem;font-weight:800;font-family:'Syne',sans-serif;color:#7c3aed">—</span>
-        </div>
-        <div><label>Observação</label><textarea id="res-observacao" placeholder="Contexto, eventos relevantes..."></textarea></div>
-        <button class="sbtn" id="btn-salvar-res" onclick="salvar('res')">Salvar resultado</button>
       </div>
+      <div id="res-tbl-section">
+        <div class="tbl-wrap">
+          <table><thead><tr>
+            <th class="sortable" onclick="sortTabela('res','indicador_nome')" data-col="indicador_nome">Indicador <span class="sort-ic" id="res-sort-indicador_nome"></span></th>
+            <th class="sortable" onclick="sortTabela('res','periodo_inicio')" data-col="periodo_inicio">Início <span class="sort-ic" id="res-sort-periodo_inicio"></span></th>
+            <th class="sortable" onclick="sortTabela('res','periodo_fim')" data-col="periodo_fim">Fim <span class="sort-ic" id="res-sort-periodo_fim"></span></th>
+            <th class="sortable" onclick="sortTabela('res','meta')" data-col="meta">Meta <span class="sort-ic" id="res-sort-meta"></span></th>
+            <th class="sortable" onclick="sortTabela('res','meta_atingida')" data-col="meta_atingida">Atingido <span class="sort-ic" id="res-sort-meta_atingida"></span></th>
+            <th class="sortable" onclick="sortTabela('res','percentual_atingido')" data-col="percentual_atingido">% Atingido <span class="sort-ic" id="res-sort-percentual_atingido"></span></th>
+            <th>Observação</th>
+            <th></th>
+          </tr></thead>
+            <tbody id="tbody-resultados"><tr><td colspan="8" style="color:#aaa;text-align:center;padding:1.5rem">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="form-title-row">
+          <h3 id="form-res-title" style="margin-bottom:0">Novo resultado</h3>
+          <button class="btn-cancel" id="btn-cancel-res" style="display:none" onclick="cancelarEdicao('res')">✕ Cancelar edição</button>
+        </div>
+        <p style="margin-bottom:1rem;font-size:13px;color:#888">Registre os resultados apurados por indicador e período.</p>
+        <input type="hidden" id="res-edit-id"/>
+        <div class="form">
+          <div><label>Indicador</label><select id="res-indicador"><option value="" disabled selected>Selecione o indicador</option></select></div>
+          <div class="row2">
+            <div><label>Início do período</label><input type="date" id="res-periodo-inicio"/></div>
+            <div><label>Fim do período</label><input type="date" id="res-periodo-fim"/></div>
+          </div>
+          <div class="row2">
+            <div><label>Meta</label><input type="number" id="res-meta" placeholder="0" oninput="calcPercentual()"/></div>
+            <div><label>Meta atingida</label><input type="number" id="res-meta-atingida" placeholder="0" oninput="calcPercentual()"/></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f5f3ff;border-radius:10px;border:1.5px solid #ede9fe">
+            <span style="font-size:13px;color:#6b7280">% Atingido (calculado):</span>
+            <span id="res-percentual-display" style="font-size:1.2rem;font-weight:800;font-family:'Syne',sans-serif;color:#7c3aed">—</span>
+          </div>
+          <div><label>Observação</label><textarea id="res-observacao" placeholder="Contexto, eventos relevantes..."></textarea></div>
+          <button class="sbtn" id="btn-salvar-res" onclick="salvar('res')">Salvar resultado</button>
+        </div>
+      </div><!-- /res-tbl-section -->
+      <div id="res-charts-panel" style="display:none"></div>
     </div>
 
     <!-- RDP -->
@@ -686,8 +736,9 @@
     if(p==='empresa')      carregarEmpresasAdmin();
     if(p==='perspectiva') carregarPerspectivas();
     if(p==='indicador')   { carregarPerspSelect(); carregarIndicadores(); }
-    if(p==='resultado')   { carregarIndicadores(true); carregarResultados(); }
+    if(p==='resultado')   { _setResView('tabela'); carregarIndicadores(true); carregarResultados(); }
     if(p==='rdp')         { carregarIndicadores(true).then(()=>renderIndChecksRdp()); carregarRdp(); }
+    if(p==='home')        carregarKpiSummary();
   }
 
   function logout(){localStorage.clear();window.location.href='/';}
@@ -1197,6 +1248,7 @@
         </div></td>`;
       tbody.appendChild(tr);
     });
+    if(_resView==='graficos') renderChartsResultados();
   }
 
   async function editarRes(id){
@@ -1588,6 +1640,154 @@
     });
   }
 
+  // ── CHARTS RESULTADOS ────────────────────────────────────────
+  let _resView = 'tabela';
+
+  function _setResView(v){
+    _resView = v;
+    document.querySelectorAll('.res-view-btn').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+    const tbl  = document.getElementById('res-tbl-section');
+    const chrt = document.getElementById('res-charts-panel');
+    if(tbl)  tbl.style.display  = v==='tabela'   ? '' : 'none';
+    if(chrt) chrt.style.display = v==='graficos'  ? '' : 'none';
+  }
+
+  function toggleResView(v){
+    _setResView(v);
+    if(v==='graficos') renderChartsResultados();
+  }
+
+  function renderChartsResultados(){
+    const container = document.getElementById('res-charts-panel');
+    if(!container) return;
+    container.innerHTML = '';
+    const filtroInd = document.getElementById('res-filtro-ind')?.value||'';
+    const lista = filtroInd ? _resData.filter(r=>String(r.indicador_id)===filtroInd) : _resData;
+    if(!lista.length){
+      container.innerHTML='<p style="color:var(--text4);text-align:center;padding:3rem;font-size:14px">Nenhum resultado registrado ainda.</p>';
+      return;
+    }
+    const byInd = new Map();
+    lista.forEach(r=>{
+      if(!byInd.has(r.indicador_id)) byInd.set(r.indicador_id,{nome:r.indicador_nome,resultados:[]});
+      byInd.get(r.indicador_id).resultados.push(r);
+    });
+    const grid = document.createElement('div');
+    grid.className = 'charts-grid';
+    byInd.forEach((data,indId)=>{
+      const ind = _indData.find(i=>i.id===indId)||{id:indId,nome:data.nome,perspectiva_nome:'',rgvini:null,rgvfim:null,rgaini:null,rgafim:null,rgveini:null,rgvefim:null};
+      const sorted = [...data.resultados].sort((a,b)=>a.periodo_inicio>b.periodo_inicio?1:-1);
+      const latest = sorted[sorted.length-1];
+      const gaugeId = 'rcg-'+indId;
+      const lineId  = 'rcl-'+indId;
+      const card = document.createElement('div');
+      card.className = 'chart-card';
+      card.innerHTML =
+        `<div class="chart-card-header">`+
+          `<span class="cc-nome">${ind.nome}</span>`+
+          (ind.perspectiva_nome?`<span class="cc-persp">${ind.perspectiva_nome}</span>`:'')+
+        `</div>`+
+        `<div class="chart-card-body">`+
+          `<div style="text-align:center;flex:0 0 auto">`+
+            `<div style="font-size:11px;color:#7c3aed;font-weight:600;margin-bottom:.3rem">Último período</div>`+
+            `<canvas id="${gaugeId}" width="200" height="130" style="display:block;margin:0 auto"></canvas>`+
+            `<div style="font-size:11px;color:var(--text4);margin-top:.3rem">`+
+              `Meta: <strong>${Number(latest.meta).toLocaleString('pt-BR')}</strong> · `+
+              `Atingido: <strong>${Number(latest.meta_atingida).toLocaleString('pt-BR')}</strong>`+
+            `</div>`+
+          `</div>`+
+          `<div style="flex:1;min-width:260px">`+
+            `<div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text);margin-bottom:.5rem">Evolução histórica</div>`+
+            `<canvas id="${lineId}" width="400" height="200" style="display:block;width:100%;max-width:100%"></canvas>`+
+          `</div>`+
+        `</div>`;
+      grid.appendChild(card);
+      requestAnimationFrame(()=>{
+        drawSpeedometer(document.getElementById(gaugeId),ind,latest.percentual_atingido);
+        drawLineChart(document.getElementById(lineId),ind,sorted,sorted.length-1);
+      });
+    });
+    container.appendChild(grid);
+  }
+
+  // ── KPI HOME SUMMARY ─────────────────────────────────────────
+  let _kpiInds = [], _kpiRess = [];
+
+  async function carregarKpiSummary(){
+    const section = document.getElementById('kpi-summary-section');
+    const grid    = document.getElementById('kpi-gauge-grid');
+    if(!section||!grid) return;
+    grid.innerHTML='<p style="color:var(--text4);font-size:13px">Carregando...</p>';
+    section.style.display='block';
+    try{
+      const [ri,rr] = await Promise.all([
+        fetch('/api/indicadores',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()),
+        fetch('/api/resultados', {headers:{Authorization:'Bearer '+token}}).then(r=>r.json())
+      ]);
+      _kpiInds = ri.indicadores||[];
+      _kpiRess = rr.resultados||[];
+      if(!_kpiInds.length){ section.style.display='none'; return; }
+      renderKpiGauges();
+    }catch(e){ console.error(e); section.style.display='none'; }
+  }
+
+  function renderKpiGauges(){
+    const grid = document.getElementById('kpi-gauge-grid');
+    if(!grid) return;
+    const de  = document.getElementById('kpi-de')?.value  || '';
+    const ate = document.getElementById('kpi-ate')?.value || '';
+
+    // Atualiza label do filtro
+    const lbl = document.getElementById('kpi-filtro-label');
+    if(lbl) lbl.textContent = (de||ate)
+      ? 'Filtrando: '+(de?fmtData(de):'início')+(ate?' até '+fmtData(ate):'')
+      : '';
+
+    // Filtra resultados pelo período selecionado
+    let ress = _kpiRess;
+    if(de)  ress = ress.filter(r => r.periodo_fim   >= de);
+    if(ate) ress = ress.filter(r => r.periodo_inicio <= ate);
+
+    // Resultado mais recente por indicador dentro do filtro
+    const latest = new Map();
+    ress.forEach(r=>{
+      const cur = latest.get(r.indicador_id);
+      if(!cur || r.periodo_fim > cur.periodo_fim) latest.set(r.indicador_id, r);
+    });
+
+    const ativos = _kpiInds.filter(i=>i.ativo && latest.has(i.id));
+    if(!ativos.length){
+      grid.innerHTML=`<p style="color:var(--text4);font-size:13px;padding:.5rem 0">${de||ate?'Nenhum resultado no período selecionado.':'Nenhum resultado registrado.'}</p>`;
+      return;
+    }
+
+    grid.innerHTML='';
+    ativos.forEach(ind=>{
+      const res = latest.get(ind.id);
+      const gaugeId = 'hkg-'+ind.id;
+      const zc = getZoneColor(ind,res.percentual_atingido);
+      const card = document.createElement('div');
+      card.className = 'kpi-gauge-card';
+      card.onclick = ()=>show('resultado');
+      card.innerHTML =
+        `<div class="kgc-nome" title="${ind.nome}">${ind.nome}</div>`+
+        (ind.perspectiva_nome?`<div class="kgc-persp">${ind.perspectiva_nome}</div>`:'')+
+        `<canvas id="${gaugeId}" width="160" height="106" style="display:block;margin:0 auto"></canvas>`+
+        `<div style="font-size:13px;font-weight:700;color:${zc};margin-top:.25rem">${res.percentual_atingido}%</div>`+
+        `<div style="font-size:10px;color:var(--text4);margin-top:.1rem">${fmtData(res.periodo_inicio)} – ${fmtData(res.periodo_fim)}</div>`;
+      grid.appendChild(card);
+      requestAnimationFrame(()=>drawSpeedometer(document.getElementById(gaugeId),ind,res.percentual_atingido));
+    });
+  }
+
+  function limparFiltroKpi(){
+    const de  = document.getElementById('kpi-de');
+    const ate = document.getElementById('kpi-ate');
+    if(de)  de.value  = '';
+    if(ate) ate.value = '';
+    renderKpiGauges();
+  }
+
   // ── CRUD GENÉRICO ────────────────────────────────────────────
   const ENTIDADE_CONFIG = {
     persp: {
@@ -1825,6 +2025,9 @@
     t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'),3000);
   }
+
+  // Carrega resumo de KPIs ao abrir a home
+  carregarKpiSummary();
 </script>
 </body>
 </html>

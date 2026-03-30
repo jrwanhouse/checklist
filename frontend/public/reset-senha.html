@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Redefinir Senha — Checklist</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:#0a0a14;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .card{background:#f7f6fb;border-radius:20px;padding:48px 40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+    .brand{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#0d0d1a;margin-bottom:2rem}
+    .bmark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff}
+    .ftitle{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;color:#0d0d1a;letter-spacing:-.8px;margin-bottom:.25rem}
+    .fsub{font-size:13px;color:#9ca3af;margin-bottom:1.8rem}
+    .field{margin-bottom:1rem}
+    .field label{display:block;font-size:12px;font-weight:500;color:#4b5563;margin-bottom:5px}
+    .field input{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#111;outline:none;transition:border-color .15s,box-shadow .15s;background:#fff}
+    .field input:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+    .btn{width:100%;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-size:15px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:opacity .15s,transform .1s,box-shadow .15s;box-shadow:0 4px 14px rgba(124,58,237,.35)}
+    .btn:hover{opacity:.93}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+    .alert{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:1rem;display:none}
+    .alert.erro{display:block;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+    .alert.ok{display:block;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+    .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;margin-right:6px;vertical-align:middle}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .back-link{display:block;text-align:center;margin-top:1.2rem;font-size:13px;color:#7c3aed;text-decoration:none;font-weight:500}
+    .back-link:hover{text-decoration:underline}
+    .invalid-banner{text-align:center;padding:2rem 0}
+    .invalid-banner p{color:#6b7280;font-size:14px;margin-top:.5rem}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="brand"><div class="bmark">✓</div>Checklist</div>
+
+  <div id="invalid-state" class="invalid-banner" style="display:none">
+    <div style="font-size:2.5rem">🔗</div>
+    <div class="ftitle" style="margin-top:.5rem">Link inválido</div>
+    <p>Este link de redefinição é inválido ou já expirou.</p>
+    <a href="/index.html" class="back-link" style="margin-top:1.5rem;display:inline-block">← Voltar ao login</a>
+  </div>
+
+  <div id="form-state">
+    <div class="ftitle">Nova senha</div>
+    <div class="fsub">Crie uma nova senha para sua conta.</div>
+    <div class="alert" id="alerta"></div>
+    <div class="field">
+      <label>Nova senha</label>
+      <input type="password" id="f-nova" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/>
+    </div>
+    <div class="field">
+      <label>Confirmar senha</label>
+      <input type="password" id="f-confirm" placeholder="Repita a senha" autocomplete="new-password"/>
+    </div>
+    <button class="btn" id="btn-submit" onclick="redefinir()">Salvar nova senha</button>
+    <a href="/index.html" class="back-link">← Voltar ao login</a>
+  </div>
+
+  <div id="success-state" style="display:none;text-align:center;padding:1rem 0">
+    <div style="font-size:2.5rem">✅</div>
+    <div class="ftitle" style="margin-top:.5rem">Senha alterada!</div>
+    <p style="color:#6b7280;font-size:14px;margin-top:.5rem;margin-bottom:1.5rem">Sua senha foi redefinida com sucesso.</p>
+    <a href="/index.html" class="btn" style="text-decoration:none;display:inline-block;width:auto;padding:13px 32px">Ir para o login</a>
+  </div>
+</div>
+
+<script>
+const API = '/api/auth';
+const params = new URLSearchParams(location.search);
+const token = params.get('token');
+
+if (!token) showInvalid();
+
+function showInvalid() {
+  document.getElementById('form-state').style.display = 'none';
+  document.getElementById('invalid-state').style.display = 'block';
+}
+
+function erro(msg) {
+  const el = document.getElementById('alerta');
+  el.textContent = msg;
+  el.className = 'alert erro';
+}
+
+async function redefinir() {
+  const nova = document.getElementById('f-nova').value;
+  const confirm = document.getElementById('f-confirm').value;
+  if (!nova || !confirm) return erro('Preencha todos os campos.');
+  if (nova.length < 8) return erro('Senha com mínimo 8 caracteres.');
+  if (nova !== confirm) return erro('As senhas não coincidem.');
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Salvando...';
+
+  try {
+    const r = await fetch(`${API}/redefinir-senha`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, nova_senha: nova }),
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      if (r.status === 400 && d.erro?.includes('inválido')) return showInvalid();
+      return erro(d.erro || 'Erro ao redefinir senha.');
+    }
+    document.getElementById('form-state').style.display = 'none';
+    document.getElementById('success-state').style.display = 'block';
+  } catch {
+    erro('Erro de conexão. Verifique o servidor.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Salvar nova senha';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') redefinir();
+});
+</script>
+</body>
+</html>

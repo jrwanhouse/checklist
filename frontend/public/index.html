@@ -87,6 +87,9 @@
     .terms{margin-top:1rem;font-size:11px;color:#c0c0c0;text-align:center;line-height:1.6}
     .terms a{color:#a78bfa;text-decoration:none}
 
+    .success{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:1rem;display:none;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+    .success.show{display:block}
+
     @media(max-width:720px){body{grid-template-columns:1fr}.left{display:none}.right{background:#fff;min-height:100vh;align-items:flex-start;padding-top:4rem}}
   </style>
 </head>
@@ -133,7 +136,7 @@
       <div class="fsub">Acesse sua conta para continuar</div>
       <div class="field"><label>E-mail</label><input type="email" id="f-email" placeholder="voce@empresa.com" autocomplete="email"/></div>
       <div class="field"><label>Senha</label><input type="password" id="f-senha" placeholder="••••••••" autocomplete="current-password"/></div>
-      <div class="forgot"><a href="#">Esqueci minha senha</a></div>
+      <div class="forgot"><a href="#" onclick="ir(2);return false;">Esqueci minha senha</a></div>
       <button class="btn" id="b0" onclick="step0()">Entrar</button>
       <div class="terms">Ao entrar, você concorda com nossos <a href="#">Termos</a> e <a href="#">Privacidade</a>.</div>
     </div>
@@ -145,6 +148,17 @@
       <div class="emp-list" id="emp-list"></div>
       <button class="btn" id="b1" onclick="step1()" disabled>Entrar na plataforma</button>
     </div>
+
+    <!-- PASSO 2: esqueci minha senha -->
+    <div id="s2" style="display:none">
+      <div class="ftitle">Recuperar senha</div>
+      <div class="fsub">Informe seu e-mail e enviaremos um link de redefinição.</div>
+      <div class="success" id="sucesso2"></div>
+      <div id="form-reset">
+        <div class="field"><label>E-mail</label><input type="email" id="f-reset-email" placeholder="voce@empresa.com" autocomplete="email"/></div>
+        <button class="btn" id="b2" onclick="stepEsqueci()">Enviar link</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -154,13 +168,22 @@ let cur=0, tokenTemp=null, empSel=null;
 
 function ir(n){
   cur=n;
-  [0,1].forEach(i=>{
+  [0,1,2].forEach(i=>{
     document.getElementById('s'+i).style.display=i===n?'block':'none';
+  });
+  // Dots só se aplicam ao fluxo principal (0 e 1)
+  [0,1].forEach(i=>{
     const d=document.getElementById('d'+i);
-    d.className='dot'+(i<n?' done':i===n?' on':'');
+    if(d) d.className='dot'+(i<n&&n<2?' done':i===n&&n<2?' on':'');
   });
   document.getElementById('back-btn').className='back'+(n>0?' show':'');
   document.getElementById('alerta').className='alert';
+  // Reset do form de esqueci-senha ao entrar nele
+  if(n===2){
+    document.getElementById('sucesso2').className='success';
+    document.getElementById('form-reset').style.display='block';
+    document.getElementById('f-reset-email').value='';
+  }
 }
 
 function erro(msg){const el=document.getElementById('alerta');el.textContent=msg;el.className='alert show';}
@@ -229,10 +252,27 @@ async function confirmarEmpresa(){
   }catch{erro('Erro de conexão.');}
 }
 
+async function stepEsqueci(){
+  const email=document.getElementById('f-reset-email').value.trim();
+  if(!email) return erro('Informe seu e-mail.');
+  loading('b2',true,'Enviando...');
+  try{
+    const r=await fetch(`${API}/esqueci-senha`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await r.json();
+    if(!r.ok) return erro(d.erro||'Erro ao enviar e-mail.');
+    document.getElementById('form-reset').style.display='none';
+    const s=document.getElementById('sucesso2');
+    s.textContent='Link enviado! Verifique seu e-mail (incluindo a caixa de spam).';
+    s.className='success show';
+  }catch{erro('Erro de conexão. Verifique o servidor.');}
+  finally{loading('b2',false,'Enviar link');}
+}
+
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter') return;
   if(cur===0) step0();
   else if(cur===1&&!document.getElementById('b1').disabled) step1();
+  else if(cur===2) stepEsqueci();
 });
 </script>
 </body>
