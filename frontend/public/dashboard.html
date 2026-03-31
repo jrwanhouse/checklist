@@ -115,7 +115,7 @@
     /* TABELA DE USUÁRIOS */
     .tbl-wrap{overflow-x:auto;margin-bottom:1.5rem}
     table{width:100%;border-collapse:collapse;font-size:13px}
-    thead th{text-align:left;padding:9px 12px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--border);background:var(--surface2)}
+    thead th{text-align:left;padding:9px 12px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid var(--border);background:var(--surface2);position:sticky;top:0;z-index:1}
     tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
     tbody tr:hover{background:var(--surface2)}
     tbody td{padding:10px 12px;color:var(--text);vertical-align:middle}
@@ -436,7 +436,7 @@
         </div>
       </div>
       <div id="res-tbl-section">
-        <div class="tbl-wrap">
+        <div class="tbl-wrap" style="max-height:420px;overflow-y:auto;overflow-x:auto">
           <table><thead><tr>
             <th class="sortable" onclick="sortTabela('res','indicador_nome')" data-col="indicador_nome">Indicador <span class="sort-ic" id="res-sort-indicador_nome"></span></th>
             <th class="sortable" onclick="sortTabela('res','periodo_inicio')" data-col="periodo_inicio">Início <span class="sort-ic" id="res-sort-periodo_inicio"></span></th>
