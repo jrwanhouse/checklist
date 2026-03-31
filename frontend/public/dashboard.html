@@ -421,7 +421,12 @@
           <button class="res-view-btn on" data-view="tabela" onclick="toggleResView('tabela')">☰ Tabela</button>
           <button class="res-view-btn" data-view="graficos" onclick="toggleResView('graficos')">📊 Gráficos</button>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <select id="res-filtro-persp" onchange="onResFiltroPersp()"
+            style="padding:9px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#111;outline:none;background:#fff;transition:border-color .15s"
+            onfocus="this.style.borderColor='#a78bfa'" onblur="this.style.borderColor='#e5e7eb'">
+            <option value="">Todas as perspectivas</option>
+          </select>
           <select id="res-filtro-ind" onchange="renderResultados()"
             style="padding:9px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#111;outline:none;background:#fff;transition:border-color .15s"
             onfocus="this.style.borderColor='#a78bfa'" onblur="this.style.borderColor='#e5e7eb'">
@@ -1118,12 +1123,24 @@
         const cur=sel.value;
         sel.innerHTML='<option value="" disabled>Selecione o indicador</option>';
         _indData.forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=i.nome;sel.appendChild(o);});
-        // popula filtro de resultados
+        // popula filtro de perspectiva de resultados
+        const resFiltroPersp=document.getElementById('res-filtro-persp');
+        if(resFiltroPersp){
+          const cpv=resFiltroPersp.value;
+          const perspVistas=new Map();
+          _indData.forEach(i=>{if(i.perspectiva_id)perspVistas.set(i.perspectiva_id,i.perspectiva_nome);});
+          resFiltroPersp.innerHTML='<option value="">Todas as perspectivas</option>';
+          perspVistas.forEach((nome,id)=>{const o=document.createElement('option');o.value=id;o.textContent=nome;resFiltroPersp.appendChild(o);});
+          if(cpv) resFiltroPersp.value=cpv;
+        }
+        // popula filtro de indicadores de resultados
         const resFiltro=document.getElementById('res-filtro-ind');
         if(resFiltro){
           const cv=resFiltro.value;
+          const perspAtiva=resFiltroPersp?.value||'';
+          const indsVisiveis=perspAtiva?_indData.filter(i=>String(i.perspectiva_id)===perspAtiva):_indData;
           resFiltro.innerHTML='<option value="">Todos os indicadores</option>';
-          _indData.forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=i.nome;resFiltro.appendChild(o);});
+          indsVisiveis.forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=i.nome;resFiltro.appendChild(o);});
           if(cv) resFiltro.value=cv;
         }
         if(cur) sel.value=cur;
@@ -1224,9 +1241,27 @@
     return `${d}/${m}/${y}`;
   }
 
+  function onResFiltroPersp(){
+    const perspAtiva=document.getElementById('res-filtro-persp')?.value||'';
+    const resFiltro=document.getElementById('res-filtro-ind');
+    if(resFiltro){
+      const indsVisiveis=perspAtiva?_indData.filter(i=>String(i.perspectiva_id)===perspAtiva):_indData;
+      resFiltro.innerHTML='<option value="">Todos os indicadores</option>';
+      indsVisiveis.forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=i.nome;resFiltro.appendChild(o);});
+    }
+    renderResultados();
+  }
+
   function renderResultados(){
+    const filtroPersp=(document.getElementById('res-filtro-persp')?.value||'');
     const filtroInd=(document.getElementById('res-filtro-ind')?.value||'');
-    let lista=filtroInd?_resData.filter(r=>String(r.indicador_id)===filtroInd):_resData;
+    let idsPersp=null;
+    if(filtroPersp){
+      idsPersp=new Set(_indData.filter(i=>String(i.perspectiva_id)===filtroPersp).map(i=>i.id));
+    }
+    let lista=_resData;
+    if(idsPersp) lista=lista.filter(r=>idsPersp.has(r.indicador_id));
+    if(filtroInd) lista=lista.filter(r=>String(r.indicador_id)===filtroInd);
     lista=sortLista(lista,'res');
     applySortIcons('res',['indicador_nome','periodo_inicio','periodo_fim','meta','meta_atingida','percentual_atingido']);
     const tbody=document.getElementById('tbody-resultados');
@@ -1661,8 +1696,13 @@
     const container = document.getElementById('res-charts-panel');
     if(!container) return;
     container.innerHTML = '';
+    const filtroPersp = document.getElementById('res-filtro-persp')?.value||'';
     const filtroInd = document.getElementById('res-filtro-ind')?.value||'';
-    const lista = filtroInd ? _resData.filter(r=>String(r.indicador_id)===filtroInd) : _resData;
+    let idsPersp=null;
+    if(filtroPersp) idsPersp=new Set(_indData.filter(i=>String(i.perspectiva_id)===filtroPersp).map(i=>i.id));
+    let lista=_resData;
+    if(idsPersp) lista=lista.filter(r=>idsPersp.has(r.indicador_id));
+    if(filtroInd) lista=lista.filter(r=>String(r.indicador_id)===filtroInd);
     if(!lista.length){
       container.innerHTML='<p style="color:var(--text4);text-align:center;padding:3rem;font-size:14px">Nenhum resultado registrado ainda.</p>';
       return;

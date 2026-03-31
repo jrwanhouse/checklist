@@ -2,13 +2,19 @@ const nodemailer = require('nodemailer');
 
 function createTransporter() {
   if (!process.env.EMAIL_USER) return null;
+  const port = parseInt(process.env.EMAIL_PORT || '587');
+  // porta 465 = SSL direto (secure:true), 587/25 = STARTTLS (secure:false)
+  const secure = process.env.EMAIL_SECURE === 'true' && port === 465;
   return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: process.env.EMAIL_SECURE === 'true',
+    host: process.env.EMAIL_HOST || 'wanhouse.net.br',
+    port,
+    secure,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
     },
   });
 }
@@ -22,8 +28,11 @@ async function enviarEmail({ para, assunto, html }) {
     console.log(`   Conteúdo: ${html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()}\n`);
     return;
   }
+  // O endereço do remetente deve ser o mesmo usuário autenticado no SMTP.
+  // EMAIL_FROM pode ter um nome amigável, mas o e-mail é sempre EMAIL_USER.
+  const fromName = (process.env.EMAIL_FROM || 'Checklist').replace(/<[^>]+>/g, '').replace(/"/g, '').trim();
   await transporter.sendMail({
-    from: process.env.EMAIL_FROM || `"Checklist" <${process.env.EMAIL_USER}>`,
+    from: `"${fromName}" <${process.env.EMAIL_USER}>`,
     to: para,
     subject: assunto,
     html,
