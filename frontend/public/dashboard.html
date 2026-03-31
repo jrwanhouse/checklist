@@ -740,8 +740,8 @@
     if(p==='usuarios')     carregarUsuarios();
     if(p==='empresa')      carregarEmpresasAdmin();
     if(p==='perspectiva') carregarPerspectivas();
-    if(p==='indicador')   { carregarPerspSelect(); carregarIndicadores(); }
-    if(p==='resultado')   { _setResView('tabela'); carregarIndicadores(true); carregarResultados(); }
+    if(p==='indicador')   { carregarPerspectivas().then(()=>{ carregarPerspSelect(); carregarIndicadores(); }); }
+    if(p==='resultado')   { _setResView('tabela'); carregarPerspectivas().then(()=>carregarIndicadores(true)); carregarResultados(); }
     if(p==='rdp')         { carregarIndicadores(true).then(()=>renderIndChecksRdp()); carregarRdp(); }
     if(p==='home')        carregarKpiSummary();
   }
@@ -1107,14 +1107,12 @@
       const r=await fetch('/api/indicadores',{headers:{Authorization:'Bearer '+token}});
       const d=await r.json();
       _indData=d.indicadores||[];
-      // Popula filtro de perspectiva
+      // Popula filtro de perspectiva (usa _perspData para mostrar todas, inclusive sem indicadores)
       const filtroSel=document.getElementById('ind-filtro-persp');
       if(filtroSel){
         const cur=filtroSel.value;
-        const perspVistas=new Map();
-        _indData.forEach(i=>{if(i.perspectiva_id)perspVistas.set(i.perspectiva_id,i.perspectiva_nome);});
         filtroSel.innerHTML='<option value="">Todas as perspectivas</option>';
-        perspVistas.forEach((nome,id)=>{const o=document.createElement('option');o.value=id;o.textContent=nome;filtroSel.appendChild(o);});
+        _perspData.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nome;filtroSel.appendChild(o);});
         if(cur) filtroSel.value=cur;
       }
       renderIndicadores();
@@ -1123,14 +1121,12 @@
         const cur=sel.value;
         sel.innerHTML='<option value="" disabled>Selecione o indicador</option>';
         _indData.forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=i.nome;sel.appendChild(o);});
-        // popula filtro de perspectiva de resultados
+        // popula filtro de perspectiva de resultados (usa _perspData para mostrar todas)
         const resFiltroPersp=document.getElementById('res-filtro-persp');
         if(resFiltroPersp){
           const cpv=resFiltroPersp.value;
-          const perspVistas=new Map();
-          _indData.forEach(i=>{if(i.perspectiva_id)perspVistas.set(i.perspectiva_id,i.perspectiva_nome);});
           resFiltroPersp.innerHTML='<option value="">Todas as perspectivas</option>';
-          perspVistas.forEach((nome,id)=>{const o=document.createElement('option');o.value=id;o.textContent=nome;resFiltroPersp.appendChild(o);});
+          _perspData.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nome;resFiltroPersp.appendChild(o);});
           if(cpv) resFiltroPersp.value=cpv;
         }
         // popula filtro de indicadores de resultados
