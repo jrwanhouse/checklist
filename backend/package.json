@@ -1,6 +1,6 @@
 {
   "name": "checklist-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Backend da plataforma Checklist",
   "main": "server.js",
   "scripts": {
