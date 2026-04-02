@@ -14,6 +14,9 @@ backend/node_modules/
 .env
 backend/.env
 
+# SSL certificates
+backend/certs/
+
 # OS files
 .DS_Store
 
