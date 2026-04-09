@@ -14,6 +14,6 @@ CREATE TABLE IF NOT EXISTS segmentos (
 );
 
 ALTER TABLE resultados
-  ADD COLUMN IF NOT EXISTS segmento_id INT NULL AFTER indicador_id,
+  ADD COLUMN segmento_id INT NULL AFTER indicador_id,
   ADD CONSTRAINT fk_resultados_segmento
-    FOREIGN KEY IF NOT EXISTS (segmento_id) REFERENCES segmentos(id) ON DELETE SET NULL;
+    FOREIGN KEY (segmento_id) REFERENCES segmentos(id) ON DELETE SET NULL;
