@@ -184,6 +184,111 @@
     @media(max-width:800px){.sb{width:200px};.charts-grid{grid-template-columns:1fr}}
     @media(max-width:600px){.sb{display:none}}
   </style>
+  <style>
+    /* ── MOBILE MENU ── */
+    #mob-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      color: var(--text3);
+      align-items: center;
+      justify-content: center;
+      transition: background .15s;
+    }
+    #mob-menu-btn:hover { background: var(--border); }
+
+    #mob-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1.5px solid var(--border);
+      z-index: 500;
+      padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+      gap: 0;
+    }
+    .mob-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 5px 2px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background .15s;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text4);
+      min-width: 0;
+    }
+    .mob-nav-item .mni-ic { font-size: 18px; line-height: 1; }
+    .mob-nav-item .mni-lbl { font-size: 10px; font-weight: 500; white-space: nowrap; }
+    .mob-nav-item.on { color: #7c3aed; }
+
+    #mob-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 600;
+      backdrop-filter: blur(2px);
+    }
+    #mob-overlay.open { display: block; }
+
+    #mob-drawer {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 280px;
+      background: #0a0a0f;
+      z-index: 700;
+      transform: translateX(100%);
+      transition: transform .28s cubic-bezier(.4,0,.2,1);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    #mob-drawer.open { transform: translateX(0); }
+
+    .mob-drawer-header { display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.2rem .9rem;border-bottom:1px solid rgba(255,255,255,.08); }
+    .mob-drawer-brand { display:flex;align-items:center;gap:9px;font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#fff; }
+    .mob-drawer-close { background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer;padding:4px 6px;border-radius:6px;line-height:1;transition:color .15s,background .15s; }
+    .mob-drawer-close:hover { color:#fff;background:rgba(255,255,255,.1); }
+    .mob-drawer-user { display:flex;align-items:center;gap:10px;padding:.9rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.07); }
+    .mob-drawer-user .uav { width:36px;height:36px;font-size:13px; }
+    .mob-drawer-user .uinfo .un { font-size:13px;color:#fff;font-weight:500; }
+    .mob-drawer-user .uinfo .ur { font-size:11px;color:rgba(255,255,255,.35); }
+    .mob-drawer-emp { padding:.75rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.07); }
+    .mob-drawer-emp .lbl { font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px; }
+    .mob-drawer-emp .nome { font-size:13px;color:#fff;font-weight:500; }
+    .mob-emp-list { margin-top:8px;display:flex;flex-direction:column;gap:2px; }
+    .mob-emp-item { padding:8px 10px;border-radius:8px;font-size:13px;color:rgba(255,255,255,.65);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .12s; }
+    .mob-emp-item:hover { background:rgba(255,255,255,.08);color:#fff; }
+    .mob-emp-item.atual { color:#a78bfa;font-weight:600; }
+    .mob-emp-item .emp-dot { width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);flex-shrink:0; }
+    .mob-emp-item.atual .emp-dot { background:#a78bfa; }
+    .mob-drawer-sec { font-size:10px;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.8px;padding:.85rem 1.2rem .25rem; }
+    .mob-drawer-nav { list-style:none;padding:0 .75rem;margin-bottom:.5rem; }
+    .mob-drawer-nav li a { display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:9px;color:rgba(255,255,255,.6);font-size:14px;text-decoration:none;cursor:pointer;transition:all .15s; }
+    .mob-drawer-nav li a:hover { background:rgba(255,255,255,.07);color:#fff; }
+    .mob-drawer-nav li a .ic { font-size:16px;width:22px;text-align:center;flex-shrink:0; }
+    .mob-drawer-foot { margin-top:auto;border-top:1px solid rgba(255,255,255,.07);padding:.9rem .75rem 1.1rem;display:flex;flex-direction:column;gap:4px; }
+    .mob-drawer-foot .theme-btn,.mob-drawer-foot .logout { width:100%;text-align:left; }
+
+    @media(max-width:600px) {
+      #mob-menu-btn { display: flex; }
+      #mob-bottom-nav { display: flex; }
+      .main { padding-bottom: 64px; }
+      .content { padding: 1rem; }
+      .topbar { padding: .75rem 1rem; }
+      .top-emp { display: none; }
+    }
+  </style>
 </head>
 <body>
 <script>(function(){const t=localStorage.getItem('checklist_theme');if(t==='dark')document.body.classList.add('dark');}());</script>
@@ -229,6 +334,9 @@
   <div class="topbar">
     <div class="ptitle" id="ptitle">Início <span class="badge-admin" id="adm-badge" style="display:none">Admin</span></div>
     <div class="top-emp" id="top-emp"></div>
+    <button id="mob-menu-btn" onclick="openMobDrawer()" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
   </div>
   <div class="content">
 
@@ -716,6 +824,19 @@
   document.getElementById('urole').textContent       = isAdmin?'Administrador':'Usuário';
   document.getElementById('uav').textContent         = (usuario.nome[0]+usuario.sobrenome[0]).toUpperCase();
   document.getElementById('wmsg').textContent        = `Olá, ${usuario.nome}! 👋`;
+  // Mobile drawer (elementos carregados após o script — usa DOMContentLoaded)
+  const _ini=(usuario.nome[0]+usuario.sobrenome[0]).toUpperCase();
+  const _mobNome=usuario.nome+' '+usuario.sobrenome;
+  const _mobRole=isAdmin?'Administrador':'Usuário';
+  const _mobEmp=empresa?.nome||'—';
+  document.addEventListener('DOMContentLoaded',function(){
+    const e1=document.getElementById('mob-unome');if(e1)e1.textContent=_mobNome;
+    const e2=document.getElementById('mob-urole');if(e2)e2.textContent=_mobRole;
+    const e3=document.getElementById('mob-uav');if(e3)e3.textContent=_ini;
+    const e4=document.getElementById('mob-emp-nome');if(e4)e4.textContent=_mobEmp;
+    const e5=document.getElementById('mob-adm-sec');if(e5&&isAdmin)e5.style.display='block';
+    const e6=document.getElementById('mob-theme-ic');if(e6)e6.textContent=document.body.classList.contains('dark')?'☀️':'🌙';
+  });
 
   if(isAdmin){
     document.getElementById('adm-sec').style.display='block';
@@ -744,6 +865,7 @@
     if(p==='resultado')   { _setResView('tabela'); carregarPerspectivas().then(()=>carregarIndicadores(true)); carregarResultados(); }
     if(p==='rdp')         { carregarIndicadores(true).then(()=>renderIndChecksRdp()); carregarRdp(); }
     if(p==='home')        carregarKpiSummary();
+    document.querySelectorAll('.mob-nav-item[data-page]').forEach(b=>b.classList.toggle('on',b.dataset.page===p));
   }
 
   function logout(){localStorage.clear();window.location.href='/';}
@@ -758,6 +880,7 @@
     const lbl=document.getElementById('theme-label');
     if(ic) ic.textContent=dark?'☀️':'🌙';
     if(lbl) lbl.textContent=dark?'Tema claro':'Tema escuro';
+    const mic=document.getElementById('mob-theme-ic');if(mic)mic.textContent=dark?'☀️':'🌙';
   }
   _atualizarBotaoTema(document.body.classList.contains('dark'));
 
@@ -2064,6 +2187,97 @@
 
   // Carrega resumo de KPIs ao abrir a home
   carregarKpiSummary();
+
+  // ── MOBILE MENU ─────────────────────────────────────────────
+  function openMobDrawer(){
+    document.getElementById('mob-drawer').classList.add('open');
+    document.getElementById('mob-overlay').classList.add('open');
+    document.body.style.overflow='hidden';
+    _carregarEmpresasDrawer();
+  }
+  function closeMobDrawer(){
+    document.getElementById('mob-drawer').classList.remove('open');
+    document.getElementById('mob-overlay').classList.remove('open');
+    document.body.style.overflow='';
+  }
+  async function _carregarEmpresasDrawer(){
+    const listEl=document.getElementById('mob-emp-list');
+    if(!listEl)return;
+    listEl.innerHTML='<span style="font-size:12px;color:rgba(255,255,255,.3);padding:4px 0">Carregando...</span>';
+    try{
+      const r=await fetch('/api/empresas',{headers:{Authorization:'Bearer '+token}});
+      const d=await r.json();
+      const lista=Array.isArray(d)?d:(d.empresas||[]);
+      listEl.innerHTML='';
+      lista.forEach(emp=>{
+        const atual=empresa&&emp.id===empresa.id;
+        const el=document.createElement('div');
+        el.className='mob-emp-item'+(atual?' atual':'');
+        el.innerHTML=`<span class="emp-dot"></span>${emp.nome}${atual?' ✓':''}`;
+        if(!atual)el.onclick=()=>trocarEmpresa(emp);
+        listEl.appendChild(el);
+      });
+    }catch{listEl.innerHTML='<span style="font-size:12px;color:rgba(255,255,255,.3)">Erro ao carregar.</span>';}
+  }
+  function _mobNavShow(p){closeMobDrawer();show(p);}
 </script>
+
+<!-- Mobile bottom navigation -->
+<nav id="mob-bottom-nav" role="navigation">
+  <button class="mob-nav-item on" data-page="home" onclick="show('home')">
+    <span class="mni-ic">⊞</span><span class="mni-lbl">Início</span>
+  </button>
+  <button class="mob-nav-item" data-page="perspectiva" onclick="show('perspectiva')">
+    <span class="mni-ic">◈</span><span class="mni-lbl">Perspectivas</span>
+  </button>
+  <button class="mob-nav-item" data-page="indicador" onclick="show('indicador')">
+    <span class="mni-ic">◎</span><span class="mni-lbl">Indicadores</span>
+  </button>
+  <button class="mob-nav-item" data-page="resultado" onclick="show('resultado')">
+    <span class="mni-ic">◉</span><span class="mni-lbl">Resultados</span>
+  </button>
+  <button class="mob-nav-item" data-page="rdp" onclick="show('rdp')">
+    <span class="mni-ic">❑</span><span class="mni-lbl">RDP</span>
+  </button>
+  <button class="mob-nav-item" onclick="openMobDrawer()">
+    <span class="mni-ic">≡</span><span class="mni-lbl">Menu</span>
+  </button>
+</nav>
+
+<!-- Overlay -->
+<div id="mob-overlay" onclick="closeMobDrawer()"></div>
+
+<!-- Side drawer -->
+<div id="mob-drawer" role="dialog" aria-label="Menu">
+  <div class="mob-drawer-header">
+    <div class="mob-drawer-brand"><div class="bmark">C</div>Checklist</div>
+    <button class="mob-drawer-close" onclick="closeMobDrawer()">✕</button>
+  </div>
+  <div class="mob-drawer-user">
+    <div class="uav" id="mob-uav">?</div>
+    <div class="uinfo">
+      <div class="un" id="mob-unome">—</div>
+      <div class="ur" id="mob-urole">Usuário</div>
+    </div>
+  </div>
+  <div class="mob-drawer-emp">
+    <div class="lbl">Empresa ativa</div>
+    <div class="nome" id="mob-emp-nome">—</div>
+    <div class="mob-emp-list" id="mob-emp-list"></div>
+  </div>
+  <div id="mob-adm-sec" style="display:none">
+    <div class="mob-drawer-sec">Administração</div>
+    <ul class="mob-drawer-nav">
+      <li><a onclick="_mobNavShow('empresa')"><span class="ic">🏢</span> Empresas</a></li>
+      <li><a onclick="_mobNavShow('usuarios')"><span class="ic">👥</span> Usuários</a></li>
+    </ul>
+  </div>
+  <div class="mob-drawer-foot">
+    <button class="theme-btn" onclick="toggleTheme()">
+      <span id="mob-theme-ic">🌙</span><span class="theme-btn-label"> Tema escuro</span>
+    </button>
+    <button class="logout" onclick="logout()">↩ <span class="logout-label">Sair da conta</span></button>
+  </div>
+</div>
 </body>
 </html>
