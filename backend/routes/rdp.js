@@ -38,29 +38,49 @@ router.get('/:id', async (req, res) => {
     if (!rdp.length) return res.status(404).json({ erro: 'RDP não encontrado.' });
 
     const [indicadores] = await db.query(
-      `SELECT i.id, i.nome, i.unidade, i.natureza,
+      `SELECT i.id, i.nome, i.unidade, i.natureza, i.segmento,
               i.rgvini, i.rgvfim, i.rgaini, i.rgafim, i.rgveini, i.rgvefim,
               p.nome AS perspectiva_nome
        FROM rdp_indicadores ri
        JOIN indicadores i ON i.id = ri.indicador_id
        LEFT JOIN perspectivas p ON p.id = i.perspectiva_id
        WHERE ri.rdp_id = ?
-       ORDER BY i.nome`,
+       ORDER BY p.nome, i.nome`,
       [req.params.id]
     );
 
     for (const ind of indicadores) {
-      const params = [ind.id, req.usuario.empresa_id];
+      const periodParams = [];
       let cond = '';
-      if (de)  { cond += ' AND periodo_inicio >= ?'; params.push(de); }
-      if (ate) { cond += ' AND periodo_fim <= ?';    params.push(ate); }
-      const [resultados] = await db.query(
-        `SELECT meta, meta_atingida, percentual_atingido, periodo_inicio, periodo_fim
-         FROM resultados WHERE indicador_id=? AND empresa_id=?${cond}
-         ORDER BY periodo_fim ASC`,
-        params
-      );
-      ind.resultados = resultados;
+      if (de)  { cond += ' AND periodo_inicio >= ?'; periodParams.push(de); }
+      if (ate) { cond += ' AND periodo_fim <= ?';    periodParams.push(ate); }
+
+      if (ind.segmento) {
+        const [segmentos] = await db.query(
+          'SELECT id, nome FROM segmentos WHERE indicador_id=? AND empresa_id=? AND ativo=1 ORDER BY nome',
+          [ind.id, req.usuario.empresa_id]
+        );
+        for (const seg of segmentos) {
+          const [segRes] = await db.query(
+            `SELECT meta, meta_atingida, percentual_atingido, periodo_inicio, periodo_fim
+             FROM resultados WHERE indicador_id=? AND segmento_id=? AND empresa_id=?${cond}
+             ORDER BY periodo_fim ASC`,
+            [ind.id, seg.id, req.usuario.empresa_id, ...periodParams]
+          );
+          seg.resultados = segRes;
+        }
+        ind.segmentos = segmentos;
+        ind.resultados = [];
+      } else {
+        const [resultados] = await db.query(
+          `SELECT meta, meta_atingida, percentual_atingido, periodo_inicio, periodo_fim
+           FROM resultados WHERE indicador_id=? AND empresa_id=?${cond}
+           ORDER BY periodo_fim ASC`,
+          [ind.id, req.usuario.empresa_id, ...periodParams]
+        );
+        ind.resultados = resultados;
+        ind.segmentos = [];
+      }
     }
 
     res.json({ rdp: rdp[0], indicadores });

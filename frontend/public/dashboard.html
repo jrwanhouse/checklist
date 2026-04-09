@@ -528,6 +528,7 @@
           </div>
           <div><label style="margin-bottom:8px;display:block">Segmento</label>
             <div class="check-row"><input type="checkbox" id="ind-segmento"/><label for="ind-segmento">Sim</label></div>
+            <span id="ind-segmento-hint" style="display:none;font-size:11px;color:#ef4444;margin-top:4px;display:none">Bloqueado: já existem resultados por segmento.</span>
           </div>
         </div>
         <div><label>Descrição</label><textarea id="ind-descricao" placeholder="Como este indicador é calculado..."></textarea></div>
@@ -1336,7 +1337,28 @@
     document.getElementById('form-ind-title').textContent='Editar indicador';
     document.getElementById('btn-cancel-ind').style.display='inline-block';
     document.getElementById('btn-salvar-ind').textContent='Salvar alterações';
+    // bloquear checkbox segmento se já há segmentos com resultados
+    const cbSeg=document.getElementById('ind-segmento');
+    const segHint=document.getElementById('ind-segmento-hint');
+    cbSeg.disabled=false;
+    if(segHint) segHint.style.display='none';
+    if(i.segmento){
+      try{
+        const rs=await fetch(`/api/segmentos?indicador_id=${id}`,{headers:{Authorization:'Bearer '+token}});
+        const ds=await rs.json();
+        const segs=ds.segmentos||[];
+        const temResultado=segs.some(s=>_segTemResultado(s.id));
+        if(temResultado){
+          cbSeg.disabled=true;
+          if(segHint) segHint.style.display='inline';
+        }
+      }catch(_){}
+    }
     document.getElementById('form-ind-title').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  function _segTemResultado(segId){
+    return _resData.some(r=>r.segmento_id===segId);
   }
 
   async function carregarPerspSelect(){
@@ -1691,43 +1713,87 @@
         return;
       }
       container.innerHTML='';
+      let _lastPersp='';
       indicadores.forEach((ind,indIdx)=>{
+        // perspectiva header (quando muda)
+        const perspNome=ind.perspectiva_nome||'';
+        if(perspNome!==_lastPersp){
+          _lastPersp=perspNome;
+          if(perspNome){
+            const ph=document.createElement('div');
+            ph.style.cssText='width:100%;margin:1.2rem 0 .5rem 0;display:flex;align-items:center;gap:8px';
+            ph.innerHTML=`<span style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em">${_esc(perspNome)}</span>`+
+              `<div style="flex:1;height:1.5px;background:#ede9fe;border-radius:2px"></div>`;
+            container.appendChild(ph);
+          }
+        }
         // grupo do indicador
         const grupo=document.createElement('div');
         grupo.style.cssText='width:100%;margin-bottom:.5rem';
         const header=document.createElement('div');
         header.style.cssText='display:flex;align-items:baseline;gap:8px;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1.5px solid #ece9f5';
         header.innerHTML=
-          `<span style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#0a0a0f">${ind.nome}</span>`+
-          `<span style="font-size:12px;color:#9ca3af">${ind.perspectiva_nome||''}</span>`;
+          `<span style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#0a0a0f">${ind.nome}</span>`;
         grupo.appendChild(header);
 
-        const row=document.createElement('div');
-        row.style.cssText='display:flex;flex-wrap:wrap;gap:1rem';
-
-        if(!ind.resultados.length){
-          row.innerHTML='<p style="color:#aaa;font-size:13px;padding:.5rem 0">Sem resultados no período.</p>';
-        } else {
-          ind.resultados.forEach((res,resIdx)=>{
-            const canvasId=`gauge-${ind.id}-${resIdx}`;
-            const periodo=`${fmtData(res.periodo_inicio)} – ${fmtData(res.periodo_fim)}`;
-            const card=document.createElement('div');
-            card.style.cssText='background:#fff;border:1.5px solid #ece9f5;border-radius:14px;padding:1.1rem;text-align:center;min-width:200px;max-width:260px;flex:1;cursor:pointer;transition:border-color .15s,box-shadow .15s';
-            card.onmouseenter=()=>{card.style.borderColor='#a78bfa';card.style.boxShadow='0 4px 14px rgba(124,58,237,.12)';};
-            card.onmouseleave=()=>{card.style.borderColor='#ece9f5';card.style.boxShadow='none';};
-            card.onclick=()=>abrirDetalheIndicador(indIdx,resIdx);
-            card.innerHTML=
-              `<div style="font-size:11px;color:#7c3aed;font-weight:600;margin-bottom:.6rem">${periodo}</div>`+
-              `<canvas id="${canvasId}" width="210" height="138" style="max-width:100%;display:block;margin:0 auto;pointer-events:none"></canvas>`+
-              `<div style="font-size:12px;color:#6b7280;margin-top:.4rem">`+
-              `Meta: <strong>${Number(res.meta).toLocaleString('pt-BR')}</strong> · `+
-              `Atingido: <strong>${Number(res.meta_atingida).toLocaleString('pt-BR')}</strong></div>`;
-            row.appendChild(card);
-            requestAnimationFrame(()=>drawSpeedometer(document.getElementById(canvasId),ind,res.percentual_atingido));
+        if(ind.segmento && ind.segmentos && ind.segmentos.length){
+          // render per-segment sub-groups
+          ind.segmentos.forEach((seg,segIdx)=>{
+            const segHeader=document.createElement('div');
+            segHeader.style.cssText='display:flex;align-items:center;gap:6px;margin:.6rem 0 .4rem 0';
+            segHeader.innerHTML=`<span style="font-size:12px;font-weight:700;color:#7c3aed;background:#f3f0ff;border:1.5px solid #ede9fe;border-radius:6px;padding:2px 10px">${_esc(seg.nome)}</span>`;
+            grupo.appendChild(segHeader);
+            const row=document.createElement('div');
+            row.style.cssText='display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:.75rem';
+            if(!seg.resultados.length){
+              row.innerHTML='<p style="color:#aaa;font-size:13px;padding:.25rem 0">Sem resultados no período.</p>';
+            } else {
+              seg.resultados.forEach((res,resIdx)=>{
+                const canvasId=`gauge-${ind.id}-s${seg.id}-${resIdx}`;
+                const periodo=`${fmtData(res.periodo_inicio)} – ${fmtData(res.periodo_fim)}`;
+                const card=document.createElement('div');
+                card.style.cssText='background:#fff;border:1.5px solid #ece9f5;border-radius:14px;padding:1.1rem;text-align:center;min-width:200px;max-width:260px;flex:1;cursor:pointer;transition:border-color .15s,box-shadow .15s';
+                card.onmouseenter=()=>{card.style.borderColor='#a78bfa';card.style.boxShadow='0 4px 14px rgba(124,58,237,.12)';};
+                card.onmouseleave=()=>{card.style.borderColor='#ece9f5';card.style.boxShadow='none';};
+                card.innerHTML=
+                  `<div style="font-size:11px;color:#7c3aed;font-weight:600;margin-bottom:.6rem">${periodo}</div>`+
+                  `<canvas id="${canvasId}" width="210" height="138" style="max-width:100%;display:block;margin:0 auto;pointer-events:none"></canvas>`+
+                  `<div style="font-size:12px;color:#6b7280;margin-top:.4rem">`+
+                  `Meta: <strong>${Number(res.meta).toLocaleString('pt-BR')}</strong> · `+
+                  `Atingido: <strong>${Number(res.meta_atingida).toLocaleString('pt-BR')}</strong></div>`;
+                row.appendChild(card);
+                requestAnimationFrame(()=>drawSpeedometer(document.getElementById(canvasId),ind,res.percentual_atingido));
+              });
+            }
+            grupo.appendChild(row);
           });
+        } else {
+          const row=document.createElement('div');
+          row.style.cssText='display:flex;flex-wrap:wrap;gap:1rem';
+          if(!ind.resultados.length){
+            row.innerHTML='<p style="color:#aaa;font-size:13px;padding:.5rem 0">Sem resultados no período.</p>';
+          } else {
+            ind.resultados.forEach((res,resIdx)=>{
+              const canvasId=`gauge-${ind.id}-${resIdx}`;
+              const periodo=`${fmtData(res.periodo_inicio)} – ${fmtData(res.periodo_fim)}`;
+              const card=document.createElement('div');
+              card.style.cssText='background:#fff;border:1.5px solid #ece9f5;border-radius:14px;padding:1.1rem;text-align:center;min-width:200px;max-width:260px;flex:1;cursor:pointer;transition:border-color .15s,box-shadow .15s';
+              card.onmouseenter=()=>{card.style.borderColor='#a78bfa';card.style.boxShadow='0 4px 14px rgba(124,58,237,.12)';};
+              card.onmouseleave=()=>{card.style.borderColor='#ece9f5';card.style.boxShadow='none';};
+              card.onclick=()=>abrirDetalheIndicador(indIdx,resIdx);
+              card.innerHTML=
+                `<div style="font-size:11px;color:#7c3aed;font-weight:600;margin-bottom:.6rem">${periodo}</div>`+
+                `<canvas id="${canvasId}" width="210" height="138" style="max-width:100%;display:block;margin:0 auto;pointer-events:none"></canvas>`+
+                `<div style="font-size:12px;color:#6b7280;margin-top:.4rem">`+
+                `Meta: <strong>${Number(res.meta).toLocaleString('pt-BR')}</strong> · `+
+                `Atingido: <strong>${Number(res.meta_atingida).toLocaleString('pt-BR')}</strong></div>`;
+              row.appendChild(card);
+              requestAnimationFrame(()=>drawSpeedometer(document.getElementById(canvasId),ind,res.percentual_atingido));
+            });
+          }
+          grupo.appendChild(row);
         }
 
-        grupo.appendChild(row);
         container.appendChild(grupo);
       });
     }catch(e){console.error(e);showToast('Erro de conexão.');}
@@ -2109,6 +2175,8 @@
         document.getElementById('ind-natureza').value='';
         document.getElementById('ind-acumulado').checked=false;
         document.getElementById('ind-segmento').checked=false;
+        document.getElementById('ind-segmento').disabled=false;
+        const _sh=document.getElementById('ind-segmento-hint');if(_sh)_sh.style.display='none';
         document.getElementById('ind-ativo').checked=true;
         document.getElementById('bloco-ativo-ind').style.display='none';
       },
