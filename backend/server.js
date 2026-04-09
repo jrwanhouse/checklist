@@ -24,6 +24,7 @@ app.use('/api/usuarios',      require('./routes/usuarios'));
 app.use('/api/perspectivas',  require('./routes/perspectivas'));
 app.use('/api/indicadores',   require('./routes/indicadores'));
 app.use('/api/resultados',    require('./routes/resultados'));
+app.use('/api/segmentos',     require('./routes/segmentos'));
 app.use('/api/rdp',           require('./routes/rdp'));
 
 app.use(express.static(path.join(__dirname, '../frontend/public')));

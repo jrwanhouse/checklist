@@ -183,6 +183,37 @@
     .kpi-gauge-card .kgc-persp{font-size:11px;color:var(--text4);margin-bottom:.3rem}
     @media(max-width:800px){.sb{width:200px};.charts-grid{grid-template-columns:1fr}}
     @media(max-width:600px){.sb{display:none}}
+
+    /* ── TREE VIEW DE RESULTADOS ── */
+    .res-layout{display:flex;gap:1.25rem;align-items:flex-start}
+    .res-tree-wrap{width:240px;flex-shrink:0;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
+    .res-tree-search{width:100%;padding:9px 13px;border:none;border-bottom:1.5px solid var(--border);font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface2);outline:none}
+    #res-tree-body{max-height:540px;overflow-y:auto;padding:.35rem 0}
+    .rtn-hd{display:flex;align-items:center;gap:7px;padding:7px 12px;cursor:pointer;transition:background .12s;font-size:13px;color:var(--text2);user-select:none}
+    .rtn-hd:hover{background:var(--surface2)}
+    .rtn-hd.on{background:rgba(124,58,237,.1);color:#7c3aed;font-weight:600}
+    .rtn-chev{font-size:9px;color:var(--text4);transition:transform .2s;width:10px;flex-shrink:0;display:inline-block}
+    .rtn-chev.open{transform:rotate(90deg)}
+    .rtn-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rtn-badge{font-size:9px;background:#f5f3ff;color:#7c3aed;padding:1px 6px;border-radius:20px;flex-shrink:0}
+    body.dark .rtn-badge{background:#2a1f4e;color:#a78bfa}
+    .rtn-acts{display:flex;gap:2px;opacity:0;transition:opacity .15s}
+    .rtn-hd:hover .rtn-acts{opacity:1}
+    .rtn-act{background:none;border:none;cursor:pointer;font-size:11px;color:var(--text4);padding:2px 5px;border-radius:4px;transition:color .12s,background .12s;font-family:'DM Sans',sans-serif}
+    .rtn-act:hover{color:var(--text);background:var(--border)}
+    .rtn-act.del:hover{color:#dc2626;background:#fee2e2}
+    .rtn-l1>.rtn-hd{padding-left:10px;font-weight:600;font-size:13px}
+    .rtn-l2>.rtn-hd{padding-left:24px}
+    .rtn-l3>.rtn-hd{padding-left:40px;font-size:12.5px;color:var(--text3)}
+    .rtn-add>.rtn-hd{padding-left:40px;font-size:12px;color:#7c3aed;font-style:italic}
+    .rtn-children{display:none}
+    .rtn-children.open{display:block}
+    /* Segment modal */
+    #seg-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+    #seg-modal.open{display:flex}
+    .seg-modal-box{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:1.5rem;width:360px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+    .seg-modal-box h4{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--text);margin-bottom:1rem}
+    @media(max-width:700px){.res-layout{flex-direction:column}.res-tree-wrap{width:100%}}
   </style>
   <style>
     /* ── MOBILE MENU ── */
@@ -524,65 +555,74 @@
     <!-- RESULTADOS -->
     <div id="page-resultado" class="page">
       <div class="tag tag-pu">◉ Resultados</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
-        <div class="res-view-toggle">
-          <button class="res-view-btn on" data-view="tabela" onclick="toggleResView('tabela')">☰ Tabela</button>
-          <button class="res-view-btn" data-view="graficos" onclick="toggleResView('graficos')">📊 Gráficos</button>
+      <div class="res-layout">
+        <!-- Árvore de navegação -->
+        <div class="res-tree-wrap">
+          <input class="res-tree-search" id="res-tree-search" type="text" placeholder="🔍 Filtrar..." oninput="filterResTree(this.value)"/>
+          <div id="res-tree-body"><span style="font-size:13px;color:#aaa;padding:1rem;display:block">Carregando...</span></div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <select id="res-filtro-persp" onchange="onResFiltroPersp()"
-            style="padding:9px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#111;outline:none;background:#fff;transition:border-color .15s"
-            onfocus="this.style.borderColor='#a78bfa'" onblur="this.style.borderColor='#e5e7eb'">
-            <option value="">Todas as perspectivas</option>
-          </select>
-          <select id="res-filtro-ind" onchange="renderResultados()"
-            style="padding:9px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#111;outline:none;background:#fff;transition:border-color .15s"
-            onfocus="this.style.borderColor='#a78bfa'" onblur="this.style.borderColor='#e5e7eb'">
-            <option value="">Todos os indicadores</option>
-          </select>
-          <span id="res-count" style="font-size:12px;color:#9ca3af;white-space:nowrap"></span>
+        <!-- Painel de conteúdo -->
+        <div style="flex:1;min-width:0">
+          <div id="res-empty" style="padding:3rem;text-align:center;color:#9ca3af">
+            <div style="font-size:2.5rem;margin-bottom:.5rem;opacity:.4">◉</div>
+            <div style="font-size:14px">Selecione um indicador ou segmento na árvore</div>
+          </div>
+          <div id="res-panel" style="display:none">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">
+              <div>
+                <div id="res-breadcrumb" style="font-size:11px;color:#9ca3af;margin-bottom:3px"></div>
+                <div id="res-panel-title" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--text)"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="res-view-toggle">
+                  <button class="res-view-btn on" data-view="tabela" onclick="toggleResView('tabela')">☰ Tabela</button>
+                  <button class="res-view-btn" data-view="graficos" onclick="toggleResView('graficos')">📊 Gráficos</button>
+                </div>
+                <span id="res-count" style="font-size:12px;color:#9ca3af;white-space:nowrap"></span>
+              </div>
+            </div>
+            <div id="res-tbl-section">
+              <div class="tbl-wrap" style="max-height:300px;overflow-y:auto;overflow-x:auto;margin-bottom:1.25rem">
+                <table><thead><tr>
+                  <th class="sortable" onclick="sortTabela('res','periodo_inicio')" data-col="periodo_inicio">Início <span class="sort-ic" id="res-sort-periodo_inicio"></span></th>
+                  <th class="sortable" onclick="sortTabela('res','periodo_fim')" data-col="periodo_fim">Fim <span class="sort-ic" id="res-sort-periodo_fim"></span></th>
+                  <th class="sortable" onclick="sortTabela('res','meta')" data-col="meta">Meta <span class="sort-ic" id="res-sort-meta"></span></th>
+                  <th class="sortable" onclick="sortTabela('res','meta_atingida')" data-col="meta_atingida">Atingido <span class="sort-ic" id="res-sort-meta_atingida"></span></th>
+                  <th class="sortable" onclick="sortTabela('res','percentual_atingido')" data-col="percentual_atingido">% <span class="sort-ic" id="res-sort-percentual_atingido"></span></th>
+                  <th>Observação</th>
+                  <th></th>
+                </tr></thead>
+                <tbody id="tbody-resultados"><tr><td colspan="7" style="color:#aaa;text-align:center;padding:1.5rem">—</td></tr></tbody>
+                </table>
+              </div>
+              <div class="form-title-row">
+                <h3 id="form-res-title" style="margin-bottom:0">Novo resultado</h3>
+                <button class="btn-cancel" id="btn-cancel-res" style="display:none" onclick="cancelarEdicao('res')">✕ Cancelar edição</button>
+              </div>
+              <input type="hidden" id="res-edit-id"/>
+              <input type="hidden" id="res-indicador-id"/>
+              <input type="hidden" id="res-segmento-id"/>
+              <div class="form" style="margin-top:.75rem">
+                <div class="row2">
+                  <div><label>Início do período</label><input type="date" id="res-periodo-inicio"/></div>
+                  <div><label>Fim do período</label><input type="date" id="res-periodo-fim"/></div>
+                </div>
+                <div class="row2">
+                  <div><label>Meta</label><input type="number" id="res-meta" placeholder="0" oninput="calcPercentual()"/></div>
+                  <div><label>Meta atingida</label><input type="number" id="res-meta-atingida" placeholder="0" oninput="calcPercentual()"/></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f5f3ff;border-radius:10px;border:1.5px solid #ede9fe">
+                  <span style="font-size:13px;color:#6b7280">% Atingido (calculado):</span>
+                  <span id="res-percentual-display" style="font-size:1.2rem;font-weight:800;font-family:'Syne',sans-serif;color:#7c3aed">—</span>
+                </div>
+                <div><label>Observação</label><textarea id="res-observacao" placeholder="Contexto, eventos relevantes..."></textarea></div>
+                <button class="sbtn" id="btn-salvar-res" onclick="salvar('res')">Salvar resultado</button>
+              </div>
+            </div>
+            <div id="res-charts-panel" style="display:none"></div>
+          </div>
         </div>
       </div>
-      <div id="res-tbl-section">
-        <div class="tbl-wrap" style="max-height:420px;overflow-y:auto;overflow-x:auto">
-          <table><thead><tr>
-            <th class="sortable" onclick="sortTabela('res','indicador_nome')" data-col="indicador_nome">Indicador <span class="sort-ic" id="res-sort-indicador_nome"></span></th>
-            <th class="sortable" onclick="sortTabela('res','periodo_inicio')" data-col="periodo_inicio">Início <span class="sort-ic" id="res-sort-periodo_inicio"></span></th>
-            <th class="sortable" onclick="sortTabela('res','periodo_fim')" data-col="periodo_fim">Fim <span class="sort-ic" id="res-sort-periodo_fim"></span></th>
-            <th class="sortable" onclick="sortTabela('res','meta')" data-col="meta">Meta <span class="sort-ic" id="res-sort-meta"></span></th>
-            <th class="sortable" onclick="sortTabela('res','meta_atingida')" data-col="meta_atingida">Atingido <span class="sort-ic" id="res-sort-meta_atingida"></span></th>
-            <th class="sortable" onclick="sortTabela('res','percentual_atingido')" data-col="percentual_atingido">% Atingido <span class="sort-ic" id="res-sort-percentual_atingido"></span></th>
-            <th>Observação</th>
-            <th></th>
-          </tr></thead>
-            <tbody id="tbody-resultados"><tr><td colspan="8" style="color:#aaa;text-align:center;padding:1.5rem">Carregando...</td></tr></tbody>
-          </table>
-        </div>
-        <div class="form-title-row">
-          <h3 id="form-res-title" style="margin-bottom:0">Novo resultado</h3>
-          <button class="btn-cancel" id="btn-cancel-res" style="display:none" onclick="cancelarEdicao('res')">✕ Cancelar edição</button>
-        </div>
-        <p style="margin-bottom:1rem;font-size:13px;color:#888">Registre os resultados apurados por indicador e período.</p>
-        <input type="hidden" id="res-edit-id"/>
-        <div class="form">
-          <div><label>Indicador</label><select id="res-indicador"><option value="" disabled selected>Selecione o indicador</option></select></div>
-          <div class="row2">
-            <div><label>Início do período</label><input type="date" id="res-periodo-inicio"/></div>
-            <div><label>Fim do período</label><input type="date" id="res-periodo-fim"/></div>
-          </div>
-          <div class="row2">
-            <div><label>Meta</label><input type="number" id="res-meta" placeholder="0" oninput="calcPercentual()"/></div>
-            <div><label>Meta atingida</label><input type="number" id="res-meta-atingida" placeholder="0" oninput="calcPercentual()"/></div>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f5f3ff;border-radius:10px;border:1.5px solid #ede9fe">
-            <span style="font-size:13px;color:#6b7280">% Atingido (calculado):</span>
-            <span id="res-percentual-display" style="font-size:1.2rem;font-weight:800;font-family:'Syne',sans-serif;color:#7c3aed">—</span>
-          </div>
-          <div><label>Observação</label><textarea id="res-observacao" placeholder="Contexto, eventos relevantes..."></textarea></div>
-          <button class="sbtn" id="btn-salvar-res" onclick="salvar('res')">Salvar resultado</button>
-        </div>
-      </div><!-- /res-tbl-section -->
-      <div id="res-charts-panel" style="display:none"></div>
     </div>
 
     <!-- RDP -->
@@ -862,7 +902,7 @@
     if(p==='empresa')      carregarEmpresasAdmin();
     if(p==='perspectiva') carregarPerspectivas();
     if(p==='indicador')   { carregarPerspectivas().then(()=>{ carregarPerspSelect(); carregarIndicadores(); }); }
-    if(p==='resultado')   { _setResView('tabela'); carregarPerspectivas().then(()=>carregarIndicadores(true)); carregarResultados(); }
+    if(p==='resultado')   { _setResView('tabela'); carregarPerspectivas().then(async()=>{ await carregarIndicadores(true); await carregarSegmentos(); await carregarResultados(); buildResTree(); }); }
     if(p==='rdp')         { carregarIndicadores(true).then(()=>renderIndChecksRdp()); carregarRdp(); }
     if(p==='home')        carregarKpiSummary();
     document.querySelectorAll('.mob-nav-item[data-page]').forEach(b=>b.classList.toggle('on',b.dataset.page===p));
@@ -1240,29 +1280,8 @@
       }
       renderIndicadores();
       if(atualizarSelect){
-        const sel=document.getElementById('res-indicador');
-        const cur=sel.value;
-        sel.innerHTML='<option value="" disabled>Selecione o indicador</option>';
-        _indData.forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=i.nome;sel.appendChild(o);});
-        // popula filtro de perspectiva de resultados (usa _perspData para mostrar todas)
-        const resFiltroPersp=document.getElementById('res-filtro-persp');
-        if(resFiltroPersp){
-          const cpv=resFiltroPersp.value;
-          resFiltroPersp.innerHTML='<option value="">Todas as perspectivas</option>';
-          _perspData.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.nome;resFiltroPersp.appendChild(o);});
-          if(cpv) resFiltroPersp.value=cpv;
-        }
-        // popula filtro de indicadores de resultados
-        const resFiltro=document.getElementById('res-filtro-ind');
-        if(resFiltro){
-          const cv=resFiltro.value;
-          const perspAtiva=resFiltroPersp?.value||'';
-          const indsVisiveis=perspAtiva?_indData.filter(i=>String(i.perspectiva_id)===perspAtiva):_indData;
-          resFiltro.innerHTML='<option value="">Todos os indicadores</option>';
-          indsVisiveis.forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=i.nome;resFiltro.appendChild(o);});
-          if(cv) resFiltro.value=cv;
-        }
-        if(cur) sel.value=cur;
+        // reconstrói a árvore de resultados se estiver na página
+        if(document.getElementById('res-tree-body')) buildResTree();
       }
       return _indData;
     }catch(e){console.error(e);return[];}
@@ -1334,23 +1353,133 @@
   // ── RESULTADOS ──────────────────────────────────────────────
   let _resData=[];
 
+  let _segData=[];
+  let _resSelType=null,_resSelId=null,_resSelIndId=null;
+  const _resTreeOpen={};
+
+  async function carregarSegmentos(){
+    try{
+      const r=await fetch('/api/segmentos',{headers:{Authorization:'Bearer '+token}});
+      const d=await r.json();
+      _segData=d.segmentos||[];
+    }catch{_segData=[];}
+  }
+
   async function carregarResultados(){
     try{
       const r=await fetch('/api/resultados',{headers:{Authorization:'Bearer '+token}});
       const d=await r.json();
       _resData=d.resultados||[];
-      // Popula filtro de indicador
-      const filtroSel=document.getElementById('res-filtro-ind');
-      if(filtroSel){
-        const cur=filtroSel.value;
-        const indsVistos=new Map();
-        _resData.forEach(r=>{if(r.indicador_id)indsVistos.set(r.indicador_id,r.indicador_nome);});
-        filtroSel.innerHTML='<option value="">Todos os indicadores</option>';
-        indsVistos.forEach((nome,id)=>{const o=document.createElement('option');o.value=id;o.textContent=nome;filtroSel.appendChild(o);});
-        if(cur) filtroSel.value=cur;
-      }
       renderResultados();
     }catch(e){console.error(e);}
+  }
+
+  function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');}
+
+  function buildResTree(){
+    const body=document.getElementById('res-tree-body');
+    if(!body)return;
+    const filter=(document.getElementById('res-tree-search')?.value||'').toLowerCase();
+    if(!_perspData.length){body.innerHTML='<span style="font-size:13px;color:#aaa;padding:1rem;display:block">Nenhuma perspectiva cadastrada.</span>';return;}
+    let html='';
+    _perspData.forEach(persp=>{
+      const inds=_indData.filter(i=>String(i.perspectiva_id)===String(persp.id)&&i.ativo);
+      const indsVisiveis=filter?inds.filter(i=>i.nome.toLowerCase().includes(filter)||persp.nome.toLowerCase().includes(filter)):inds;
+      if(!indsVisiveis.length)return;
+      const pid='p'+persp.id;
+      const open=_resTreeOpen[pid]!==false;
+      html+=`<div class="rtn rtn-l1" data-pid="${persp.id}">
+        <div class="rtn-hd" onclick="toggleRtnPersp(this)">
+          <span class="rtn-chev${open?' open':''}">▶</span>
+          <span class="rtn-ic" style="color:#7c3aed">📁</span>
+          <span class="rtn-lbl">${_esc(persp.nome)}</span>
+        </div>
+        <div class="rtn-children${open?' open':''}">`;
+      indsVisiveis.forEach(ind=>{
+        if(ind.segmento){
+          const segs=_segData.filter(s=>String(s.indicador_id)===String(ind.id)&&s.ativo);
+          const iopen=_resTreeOpen[ind.id]!==false;
+          html+=`<div class="rtn rtn-l2" data-iid="${ind.id}">
+            <div class="rtn-hd" onclick="toggleRtnInd(this)">
+              <span class="rtn-chev${iopen?' open':''}">▶</span>
+              <span class="rtn-ic">◉</span>
+              <span class="rtn-lbl">${_esc(ind.nome)}</span>
+              <span class="rtn-badge">🏷 segmentos</span>
+            </div>
+            <div class="rtn-children${iopen?' open':''}">`;
+          segs.forEach(seg=>{
+            const on=_resSelType==='seg'&&_resSelId===seg.id;
+            html+=`<div class="rtn rtn-l3">
+              <div class="rtn-hd${on?' on':''}" onclick="selectResNode('seg',${seg.id},${ind.id},'${_esc(seg.nome)}','${_esc(persp.nome)} › ${_esc(ind.nome)}')">
+                <span style="width:10px;flex-shrink:0"></span>
+                <span class="rtn-ic" style="color:#9ca3af;font-size:10px">●</span>
+                <span class="rtn-lbl">${_esc(seg.nome)}</span>
+                <span class="rtn-acts">
+                  <button class="rtn-act" onclick="event.stopPropagation();abrirSegModal(${seg.id},'${_esc(seg.nome)}',${ind.id})" title="Editar">✎</button>
+                  <button class="rtn-act del" onclick="event.stopPropagation();excluirSegmento(${seg.id},'${_esc(seg.nome)}')" title="Excluir">✕</button>
+                </span>
+              </div>
+            </div>`;
+          });
+          html+=`<div class="rtn rtn-add">
+              <div class="rtn-hd" onclick="abrirSegModal(null,null,${ind.id})">
+                <span style="width:10px;flex-shrink:0"></span>
+                <span class="rtn-ic">+</span>
+                <span class="rtn-lbl">Novo segmento</span>
+              </div>
+            </div>
+            </div></div>`;
+        }else{
+          const on=_resSelType==='ind'&&_resSelId===ind.id;
+          html+=`<div class="rtn rtn-l2">
+            <div class="rtn-hd${on?' on':''}" onclick="selectResNode('ind',${ind.id},${ind.id},'${_esc(ind.nome)}','${_esc(persp.nome)}')">
+              <span style="width:10px;flex-shrink:0"></span>
+              <span class="rtn-ic">◉</span>
+              <span class="rtn-lbl">${_esc(ind.nome)}</span>
+            </div>
+          </div>`;
+        }
+      });
+      html+=`</div></div>`;
+    });
+    body.innerHTML=html||'<span style="font-size:13px;color:#aaa;padding:1rem;display:block">Nenhum resultado encontrado.</span>';
+  }
+
+  function filterResTree(v){ buildResTree(); }
+
+  function toggleRtnPersp(hd){
+    const node=hd.closest('[data-pid]');
+    const pid='p'+node.dataset.pid;
+    const children=node.querySelector('.rtn-children');
+    const chev=hd.querySelector('.rtn-chev');
+    const isOpen=children.classList.toggle('open');
+    chev.classList.toggle('open',isOpen);
+    _resTreeOpen[pid]=isOpen;
+  }
+  function toggleRtnInd(hd){
+    const node=hd.closest('[data-iid]');
+    const iid=node.dataset.iid;
+    const children=node.querySelector('.rtn-children');
+    const chev=hd.querySelector('.rtn-chev');
+    const isOpen=children.classList.toggle('open');
+    chev.classList.toggle('open',isOpen);
+    _resTreeOpen[iid]=isOpen;
+  }
+
+  function selectResNode(type,id,indId,label,breadcrumb){
+    _resSelType=type;_resSelId=id;_resSelIndId=indId;
+    // Atualiza destaque na árvore
+    document.querySelectorAll('#res-tree-body .rtn-hd.on').forEach(e=>e.classList.remove('on'));
+    if(event?.currentTarget) event.currentTarget.classList.add('on');
+    // Mostra painel
+    document.getElementById('res-empty').style.display='none';
+    document.getElementById('res-panel').style.display='block';
+    document.getElementById('res-panel-title').textContent=label;
+    document.getElementById('res-breadcrumb').textContent=breadcrumb||'';
+    document.getElementById('res-indicador-id').value=indId;
+    document.getElementById('res-segmento-id').value=type==='seg'?id:'';
+    cancelarEdicao('res');
+    renderResultados();
   }
 
   function fmtData(val){
@@ -1360,37 +1489,24 @@
     return `${d}/${m}/${y}`;
   }
 
-  function onResFiltroPersp(){
-    const perspAtiva=document.getElementById('res-filtro-persp')?.value||'';
-    const resFiltro=document.getElementById('res-filtro-ind');
-    if(resFiltro){
-      const indsVisiveis=perspAtiva?_indData.filter(i=>String(i.perspectiva_id)===perspAtiva):_indData;
-      resFiltro.innerHTML='<option value="">Todos os indicadores</option>';
-      indsVisiveis.forEach(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=i.nome;resFiltro.appendChild(o);});
-    }
-    renderResultados();
-  }
-
   function renderResultados(){
-    const filtroPersp=(document.getElementById('res-filtro-persp')?.value||'');
-    const filtroInd=(document.getElementById('res-filtro-ind')?.value||'');
-    let idsPersp=null;
-    if(filtroPersp){
-      idsPersp=new Set(_indData.filter(i=>String(i.perspectiva_id)===filtroPersp).map(i=>i.id));
-    }
+    if(!_resSelType)return;
     let lista=_resData;
-    if(idsPersp) lista=lista.filter(r=>idsPersp.has(r.indicador_id));
-    if(filtroInd) lista=lista.filter(r=>String(r.indicador_id)===filtroInd);
+    if(_resSelType==='ind'){
+      lista=lista.filter(r=>String(r.indicador_id)===String(_resSelIndId)&&!r.segmento_id);
+    }else{
+      lista=lista.filter(r=>String(r.segmento_id)===String(_resSelId));
+    }
     lista=sortLista(lista,'res');
-    applySortIcons('res',['indicador_nome','periodo_inicio','periodo_fim','meta','meta_atingida','percentual_atingido']);
+    applySortIcons('res',['periodo_inicio','periodo_fim','meta','meta_atingida','percentual_atingido']);
     const tbody=document.getElementById('tbody-resultados');
+    const countEl=document.getElementById('res-count');
+    if(countEl) countEl.textContent=lista.length+' resultado'+(lista.length!==1?'s':'');
     tbody.innerHTML='';
-    document.getElementById('res-count').textContent=lista.length+' resultado'+(lista.length!==1?'s':'');
-    if(!lista.length){tbody.innerHTML='<tr><td colspan="8" style="color:#aaa;text-align:center;padding:1.5rem">Nenhum resultado encontrado.</td></tr>';return;}
+    if(!lista.length){tbody.innerHTML='<tr><td colspan="7" style="color:#aaa;text-align:center;padding:1.5rem">Nenhum resultado registrado.</td></tr>';return;}
     lista.forEach(res=>{
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td><strong>${res.indicador_nome||'—'}</strong></td>
-        <td>${fmtData(res.periodo_inicio)}</td>
+      tr.innerHTML=`<td>${fmtData(res.periodo_inicio)}</td>
         <td>${fmtData(res.periodo_fim)}</td>
         <td>${Number(res.meta).toLocaleString('pt-BR')}</td>
         <td>${Number(res.meta_atingida).toLocaleString('pt-BR')}</td>
@@ -1405,11 +1521,11 @@
     if(_resView==='graficos') renderChartsResultados();
   }
 
-  async function editarRes(id){
-    await carregarIndicadores(true);
+  function editarRes(id){
     const res=_resData.find(x=>x.id===id);if(!res)return;
     document.getElementById('res-edit-id').value=id;
-    document.getElementById('res-indicador').value=res.indicador_id;
+    document.getElementById('res-indicador-id').value=res.indicador_id;
+    document.getElementById('res-segmento-id').value=res.segmento_id||'';
     document.getElementById('res-periodo-inicio').value=res.periodo_inicio?res.periodo_inicio.substring(0,10):'';
     document.getElementById('res-periodo-fim').value=res.periodo_fim?res.periodo_fim.substring(0,10):'';
     document.getElementById('res-meta').value=res.meta;
@@ -1815,13 +1931,9 @@
     const container = document.getElementById('res-charts-panel');
     if(!container) return;
     container.innerHTML = '';
-    const filtroPersp = document.getElementById('res-filtro-persp')?.value||'';
-    const filtroInd = document.getElementById('res-filtro-ind')?.value||'';
-    let idsPersp=null;
-    if(filtroPersp) idsPersp=new Set(_indData.filter(i=>String(i.perspectiva_id)===filtroPersp).map(i=>i.id));
     let lista=_resData;
-    if(idsPersp) lista=lista.filter(r=>idsPersp.has(r.indicador_id));
-    if(filtroInd) lista=lista.filter(r=>String(r.indicador_id)===filtroInd);
+    if(_resSelType==='ind') lista=lista.filter(r=>String(r.indicador_id)===String(_resSelIndId)&&!r.segmento_id);
+    else if(_resSelType==='seg') lista=lista.filter(r=>String(r.segmento_id)===String(_resSelId));
     if(!lista.length){
       container.innerHTML='<p style="color:var(--text4);text-align:center;padding:3rem;font-size:14px">Nenhum resultado registrado ainda.</p>';
       return;
@@ -2006,19 +2118,19 @@
       api: 'resultados', idField: 'res-edit-id', titleEl: 'form-res-title', cancelEl: 'btn-cancel-res',
       btnEl: 'btn-salvar-res', btnLabel: 'Salvar resultado',
       getBody: () => ({
-        indicador_id: document.getElementById('res-indicador').value,
+        indicador_id: document.getElementById('res-indicador-id').value,
+        segmento_id: document.getElementById('res-segmento-id').value||null,
         periodo_inicio: document.getElementById('res-periodo-inicio').value,
         periodo_fim: document.getElementById('res-periodo-fim').value,
         meta: document.getElementById('res-meta').value,
         meta_atingida: document.getElementById('res-meta-atingida').value,
         observacao: document.getElementById('res-observacao').value.trim()
       }),
-      validate: b => !b.indicador_id ? 'Selecione o indicador.' : !b.periodo_inicio ? 'Data de início obrigatória.' : !b.periodo_fim ? 'Data de fim obrigatória.' : b.periodo_fim < b.periodo_inicio ? 'Data de fim não pode ser anterior ao início.' : b.meta==='' ? 'Meta obrigatória.' : b.meta_atingida==='' ? 'Meta atingida obrigatória.' : null,
+      validate: b => !b.indicador_id?'Selecione um nó na árvore.':!b.periodo_inicio?'Data de início obrigatória.':!b.periodo_fim?'Data de fim obrigatória.':b.periodo_fim<b.periodo_inicio?'Data de fim inválida.':b.meta===''?'Meta obrigatória.':b.meta_atingida===''?'Meta atingida obrigatória.':null,
       reload: () => carregarResultados(),
       resetFields: () => {
         ['res-periodo-inicio','res-periodo-fim','res-meta','res-meta-atingida','res-observacao'].forEach(id=>document.getElementById(id).value='');
-        document.getElementById('res-indicador').value='';
-        document.getElementById('res-percentual-display').textContent='—';
+        const pd=document.getElementById('res-percentual-display');if(pd)pd.textContent='—';
       },
       titleNew: 'Novo resultado', titleEdit: 'Editar resultado'
     },
@@ -2188,6 +2300,54 @@
   // Carrega resumo de KPIs ao abrir a home
   carregarKpiSummary();
 
+  // ── SEGMENTOS ───────────────────────────────────────────────
+  let _segModalIndId=null,_segModalSegId=null;
+
+  function abrirSegModal(segId,segNome,indId){
+    _segModalIndId=indId;_segModalSegId=segId;
+    document.getElementById('seg-modal-title').textContent=segId?'Editar segmento':'Novo segmento';
+    document.getElementById('seg-modal-nome').value=segNome||'';
+    document.getElementById('seg-modal').classList.add('open');
+    setTimeout(()=>document.getElementById('seg-modal-nome').focus(),80);
+  }
+  function fecharSegModal(){document.getElementById('seg-modal').classList.remove('open');}
+
+  async function salvarSegmento(){
+    const nome=document.getElementById('seg-modal-nome').value.trim();
+    if(!nome)return showToast('Nome do segmento obrigatório.');
+    const btn=document.getElementById('btn-salvar-seg');btn.disabled=true;
+    try{
+      const url=_segModalSegId?`/api/segmentos/${_segModalSegId}`:'/api/segmentos';
+      const method=_segModalSegId?'PUT':'POST';
+      const body=_segModalSegId?{nome,ativo:1}:{indicador_id:_segModalIndId,nome};
+      const r=await fetch(url,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
+      const d=await r.json();
+      if(!r.ok)return showToast(d.erro||'Erro ao salvar.');
+      showToast(_segModalSegId?'Segmento atualizado!':'Segmento criado!');
+      fecharSegModal();
+      await carregarSegmentos();
+      buildResTree();
+    }catch{showToast('Erro de conexão.');}
+    finally{btn.disabled=false;}
+  }
+
+  async function excluirSegmento(segId,nome){
+    if(!confirm(`Excluir segmento "${nome}"? Os resultados vinculados perderão o vínculo.`))return;
+    try{
+      const r=await fetch(`/api/segmentos/${segId}`,{method:'DELETE',headers:{Authorization:'Bearer '+token}});
+      const d=await r.json();
+      if(!r.ok)return showToast(d.erro||'Erro ao excluir.');
+      showToast('Segmento excluído.');
+      if(_resSelType==='seg'&&_resSelId===segId){
+        _resSelType=null;_resSelId=null;_resSelIndId=null;
+        document.getElementById('res-empty').style.display='block';
+        document.getElementById('res-panel').style.display='none';
+      }
+      await carregarSegmentos();
+      buildResTree();
+    }catch{showToast('Erro de conexão.');}
+  }
+
   // ── MOBILE MENU ─────────────────────────────────────────────
   function openMobDrawer(){
     document.getElementById('mob-drawer').classList.add('open');
@@ -2221,6 +2381,23 @@
   }
   function _mobNavShow(p){closeMobDrawer();show(p);}
 </script>
+
+<!-- Modal de segmento -->
+<div id="seg-modal">
+  <div class="seg-modal-box">
+    <h4 id="seg-modal-title">Novo segmento</h4>
+    <div class="form">
+      <div>
+        <label>Nome do segmento</label>
+        <input type="text" id="seg-modal-nome" placeholder="Ex: São Paulo, Região Norte..."/>
+      </div>
+      <div style="display:flex;gap:.75rem">
+        <button class="sbtn" id="btn-salvar-seg" onclick="salvarSegmento()" style="flex:1">Salvar</button>
+        <button onclick="fecharSegModal()" style="padding:10px 18px;border:1.5px solid var(--border2);border-radius:10px;background:var(--surface);color:var(--text3);font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Mobile bottom navigation -->
 <nav id="mob-bottom-nav" role="navigation">
