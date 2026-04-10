@@ -1,12 +1,17 @@
 {
   "name": "checklist-mobile",
   "version": "1.0.0",
-  "description": "Checklist App — Android (Capacitor)",
+  "description": "Checklist App — Android & iOS (Capacitor)",
   "scripts": {
     "build": "node scripts/build.js",
     "sync": "npm run build && npx cap sync android",
+    "sync:ios": "npm run build && npx cap sync ios",
+    "sync:all": "npm run build && npx cap sync",
     "open": "npx cap open android",
-    "android": "npm run sync && npm run open"
+    "open:ios": "npx cap open ios",
+    "android": "npm run sync && npm run open",
+    "ios": "npm run sync:ios && npm run open:ios",
+    "ios:setup": "npm install @capacitor/ios && npx cap add ios"
   },
   "dependencies": {
     "@capacitor/android": "^6.0.0",
