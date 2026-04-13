@@ -18,6 +18,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', rateLimit({ windowMs: 15*60*1000, max: 40, message: { erro: 'Muitas tentativas.' } }));
 
+// Blacklist de tokens invalidados no logout (em memória — limpa ao reiniciar)
+const tokenBlacklist = new Set();
+app.locals.tokenBlacklist = tokenBlacklist;
+
 app.use('/api/auth',          require('./routes/auth'));
 app.use('/api/empresas',      require('./routes/empresas'));
 app.use('/api/usuarios',      require('./routes/usuarios'));
@@ -26,6 +30,12 @@ app.use('/api/indicadores',   require('./routes/indicadores'));
 app.use('/api/resultados',    require('./routes/resultados'));
 app.use('/api/segmentos',     require('./routes/segmentos'));
 app.use('/api/rdp',           require('./routes/rdp'));
+
+// Serve dashboard.html sem cache para impedir restauração via bfcache
+app.get('/dashboard.html', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(path.join(__dirname, '../frontend/public/dashboard.html'));
+});
 
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, '../frontend/public/index.html')));

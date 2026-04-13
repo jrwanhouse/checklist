@@ -2,6 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <!-- Bloqueia renderização se não há token; desabilita bfcache -->
+  <script>
+    if(!localStorage.getItem('checklist_token')){window.location.replace('/');}
+    window.addEventListener('unload', function(){});
+  </script>
   <title>Checklist — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
@@ -857,6 +864,14 @@
   const empresa = JSON.parse(localStorage.getItem('checklist_empresa')||'null');
   if(!token||!usuario){window.location.href='/';throw 0;}
 
+  // Intercepta qualquer fetch que retorne 401 — redireciona para login
+  const _origFetch = window.fetch;
+  window.fetch = async function(...args) {
+    const res = await _origFetch.apply(this, args);
+    if (res.status === 401) { localStorage.clear(); window.location.replace('/'); }
+    return res;
+  };
+
   const isAdmin = !!usuario.admin;
 
   document.getElementById('sb-emp-nome').textContent = empresa?.nome||'—';
@@ -909,7 +924,32 @@
     document.querySelectorAll('.mob-nav-item[data-page]').forEach(b=>b.classList.toggle('on',b.dataset.page===p));
   }
 
-  function logout(){localStorage.clear();window.location.href='/';}
+  async function logout() {
+    const t = localStorage.getItem('checklist_token');
+    if (t) {
+      try { await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + t } }); }
+      catch (_) {}
+    }
+    localStorage.clear();
+    window.location.replace('/');
+  }
+
+  // Guard: ao restaurar página (bfcache / back button), verifica token no servidor
+  async function _checkAuth() {
+    document.body.style.visibility = 'hidden';
+    const t = localStorage.getItem('checklist_token');
+    if (!t) { window.location.replace('/'); return; }
+    try {
+      const r = await fetch('/api/auth/me', { headers: { Authorization: 'Bearer ' + t } });
+      if (!r.ok) { localStorage.clear(); window.location.replace('/'); return; }
+    } catch (_) { /* offline — mantém sessão */ }
+    document.body.style.visibility = '';
+  }
+
+  window.addEventListener('pageshow', _checkAuth);
+
+  // Capacitor: verifica ao retomar o app (back button nativo)
+  document.addEventListener('resume', _checkAuth);
 
   function toggleTheme(){
     const dark=document.body.classList.toggle('dark');

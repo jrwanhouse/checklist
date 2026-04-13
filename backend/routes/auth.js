@@ -130,7 +130,10 @@ router.post('/cadastro', async (req, res) => {
 function autenticar(req, res, next) {
   const h = req.headers.authorization;
   if (!h?.startsWith('Bearer ')) return res.status(401).json({ erro: 'Token ausente.' });
-  try { req.usuario = jwt.verify(h.split(' ')[1], JWT_SECRET); next(); }
+  const token = h.split(' ')[1];
+  if (req.app.locals.tokenBlacklist?.has(token))
+    return res.status(401).json({ erro: 'Token inválido ou expirado.' });
+  try { req.usuario = jwt.verify(token, JWT_SECRET); next(); }
   catch { return res.status(401).json({ erro: 'Token inválido ou expirado.' }); }
 }
 
@@ -282,6 +285,14 @@ router.post('/reenviar-verificacao', autenticar, async (req, res) => {
     console.error(err);
     return res.status(500).json({ erro: 'Erro interno.' });
   }
+});
+
+// ── POST /api/auth/logout ─────────────────────────────────────
+router.post('/logout', autenticar, (req, res) => {
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('Bearer ', '').trim();
+  if (token) req.app.locals.tokenBlacklist.add(token);
+  return res.json({ ok: true });
 });
 
 module.exports = router;
